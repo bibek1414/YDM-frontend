@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Loader2, UserPlus } from "lucide-react";
+import { Eye, EyeOff, Loader2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -71,6 +71,7 @@ export function CreateUserDialog({
   onSuccess,
 }: CreateUserDialogProps) {
   const [open, setOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const createUser = useCreateUser();
 
   const {
@@ -99,6 +100,7 @@ export function CreateUserDialog({
     createUser.mutate(payload, {
       onSuccess: () => {
         reset();
+        setShowPassword(false);
         setOpen(false);
         onSuccess?.();
       },
@@ -106,7 +108,10 @@ export function CreateUserDialog({
   }
 
   function handleOpenChange(next: boolean) {
-    if (!next) reset();
+    if (!next) {
+      reset();
+      setShowPassword(false);
+    }
     setOpen(next);
   }
 
@@ -220,15 +225,30 @@ export function CreateUserDialog({
             <label className="text-xs font-medium text-gray-700">
               Password
             </label>
-            <Input
-              {...register("password", {
-                required: "Required",
-                minLength: { value: 6, message: "Min. 6 characters" },
-              })}
-              type="password"
-              placeholder="••••••••"
-              aria-invalid={!!errors.password}
-            />
+            <div className="relative">
+              <Input
+                {...register("password", {
+                  required: "Required",
+                  minLength: { value: 6, message: "Min. 6 characters" },
+                })}
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                className="pr-10"
+                aria-invalid={!!errors.password}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
             {errors.password && (
               <span className="text-[10px] text-red-500">
                 {errors.password.message}
