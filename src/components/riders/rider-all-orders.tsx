@@ -722,9 +722,21 @@ export function RiderDashboardView() {
                           <div className="flex gap-2 items-start">
                             <User className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
                             <div className="flex-1 min-w-0">
-                              <p className="text-[9px] font-semibold text-gray-400 uppercase">
-                                Client (vendor)
-                              </p>
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-[9px] font-semibold text-gray-400 uppercase">
+                                  Client (vendor)
+                                </p>
+                                {order.sender_phone && (
+                                  <a
+                                    href={`tel:${order.sender_phone}`}
+                                    className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 hover:text-emerald-700 hover:underline transition-colors cursor-pointer"
+                                    title={`Call ${order.sender_name}`}
+                                  >
+                                    <Phone className="w-2.5 h-2.5" />
+                                    <span>Call Vendor</span>
+                                  </a>
+                                )}
+                              </div>
                               <p className="text-xs text-gray-700 font-medium mt-0.5">
                                 {order.project_client}{" "}
                                 <span className="text-[10px] font-light text-gray-400">
