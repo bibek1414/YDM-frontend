@@ -105,6 +105,22 @@ export async function getOrdersByVendor(
   return api.get<PaginatedResponse<Order>>(url);
 }
 
+export async function getAllOrders(
+  page: number = 1,
+  pageSize: number = 50,
+  search: string = "",
+  status: string = "",
+  startDate?: string,
+  endDate?: string,
+) {
+  let url = `/api/orders/?page=${page}&page_size=${pageSize}`;
+  if (search) url += `&search=${encodeURIComponent(search)}`;
+  if (status) url += `&status=${encodeURIComponent(status)}`;
+  if (startDate) url += `&start_date=${encodeURIComponent(startDate)}`;
+  if (endDate) url += `&end_date=${encodeURIComponent(endDate)}`;
+  return api.get<PaginatedResponse<Order>>(url);
+}
+
 export async function getOrderDetailsByVendor(tracking_number: string) {
   return api.get<Order>(`/api/orders/${tracking_number}`);
 }

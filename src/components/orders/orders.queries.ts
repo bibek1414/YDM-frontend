@@ -12,6 +12,7 @@ import {
     UpdateOrderPayload,
     deleteOrder,
     createOrder,
+    getAllOrders,
 } from "@/src/services/orders";
 import { RIDER_QUERY_KEYS } from "@/src/hooks/use-rider";
 
@@ -46,6 +47,23 @@ export function useRiderOrders(page = 1, pageSize = 10, search = "", status = ""
         queryFn: () => getRiderOrders(page, pageSize, search, status),
         enabled,
         placeholderData: (prev) => prev, // keep old data while fetching next page
+    });
+}
+
+export function useAllOrders(
+    page = 1,
+    pageSize = 10,
+    startDate?: string,
+    endDate?: string,
+    status?: string,
+    search?: string,
+    enabled = true
+) {
+    return useQuery({
+        queryKey: [...ORDERS_QUERY_KEYS.all, "systemAll", page, pageSize, startDate, endDate, status, search],
+        queryFn: () => getAllOrders(page, pageSize, search, status, startDate, endDate),
+        enabled,
+        placeholderData: (prev) => prev,
     });
 }
 

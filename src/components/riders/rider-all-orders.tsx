@@ -37,6 +37,7 @@ import {
 import {
   useUpdateRiderOrderStatus,
   useVerifyRiderOrder,
+  useAllOrders,
 } from "@/src/components/orders/orders.queries";
 import { RiderPackageStats } from "@/src/components/riders/rider-package-stats";
 import { RiderCommissionStats } from "@/src/components/riders/rider-commission-stats";
@@ -283,22 +284,51 @@ export function RiderDashboardView() {
 
   // Fetch orders
   const statusParam = ordersStatus === "all" ? undefined : ordersStatus;
+  const isAllTab = activeTab === "all";
+  const isTodayTab = activeTab === "today";
+
+  // Today's orders query (rider-specific)
   const {
-    data: ordersData,
-    isLoading: isOrdersLoading,
-    isFetching: isOrdersFetching,
-    isError: isOrdersError,
-    error: ordersError,
-    refetch: refetchOrders,
+    data: todayOrdersData,
+    isLoading: isTodayOrdersLoading,
+    isFetching: isTodayOrdersFetching,
+    isError: isTodayOrdersError,
+    error: todayOrdersError,
+    refetch: refetchTodayOrders,
   } = useRiderOrders(
     ordersPage,
     ORDERS_PAGE_SIZE,
-    activeTab === "all" ? startDate : undefined,
-    activeTab === "all" ? endDate : undefined,
-    activeTab === "all" ? statusParam : undefined,
-    activeTab === "all" ? debouncedSearch : undefined,
-    activeTab !== "commission",
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    isTodayTab,
   );
+
+  // All orders query (system-wide)
+  const {
+    data: allOrdersData,
+    isLoading: isAllOrdersLoading,
+    isFetching: isAllOrdersFetching,
+    isError: isAllOrdersError,
+    error: allOrdersError,
+    refetch: refetchAllOrders,
+  } = useAllOrders(
+    ordersPage,
+    ORDERS_PAGE_SIZE,
+    startDate,
+    endDate,
+    statusParam,
+    debouncedSearch,
+    isAllTab,
+  );
+
+  const ordersData = isAllTab ? allOrdersData : todayOrdersData;
+  const isOrdersLoading = isAllTab ? isAllOrdersLoading : isTodayOrdersLoading;
+  const isOrdersFetching = isAllTab ? isAllOrdersFetching : isTodayOrdersFetching;
+  const isOrdersError = isAllTab ? isAllOrdersError : isTodayOrdersError;
+  const ordersError = isAllTab ? allOrdersError : todayOrdersError;
+  const refetchOrders = isAllTab ? refetchAllOrders : refetchTodayOrders;
 
   // Fetch payment history
   const [paymentsPage, setPaymentsPage] = useState(1);
