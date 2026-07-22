@@ -1,9 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Package, RotateCcw, Receipt, FileBarChart, Plus } from "lucide-react";
+import {
+  LayoutDashboard,
+  Package,
+  RotateCcw,
+  Receipt,
+  FileBarChart,
+  Plus,
+  Coins,
+} from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 
 const BASE = "/dashboard";
@@ -15,15 +21,23 @@ export interface VendorNavProps {
 export function VendorNav({ vendorId }: VendorNavProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   const baseHref = vendorId ? `/dashboard/vendors/${vendorId}` : BASE;
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: baseHref },
-    { icon: Package, label: "Orders", href: vendorId ? `${baseHref}/orders` : `${BASE}/orders/my-orders` },
-    { icon: RotateCcw, label: "Return Pending", href: `${baseHref}/orders/return-pending` },
+    {
+      icon: Package,
+      label: "Orders",
+      href: vendorId ? `${baseHref}/orders` : `${BASE}/orders/my-orders`,
+    },
+    {
+      icon: RotateCcw,
+      label: "Return Pending",
+      href: `${baseHref}/orders/return-pending`,
+    },
     { icon: Receipt, label: "Invoice", href: `${baseHref}/invoice` },
     { icon: FileBarChart, label: "Statement", href: `${baseHref}/statement` },
+    { icon: Coins, label: "Payments", href: `${baseHref}/payments` },
   ];
 
   return (
@@ -35,7 +49,8 @@ export function VendorNav({ vendorId }: VendorNavProps) {
             pathname === item.href ||
             (item.href !== baseHref &&
               pathname.startsWith(item.href) &&
-              (item.label !== "Orders" || !pathname.startsWith(`${item.href}/return-pending`)));
+              (item.label !== "Orders" ||
+                !pathname.startsWith(`${item.href}/return-pending`)));
 
           return (
             <Button
