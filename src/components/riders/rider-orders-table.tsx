@@ -481,7 +481,6 @@ const editOrderSchema = z.object({
   recipient_city: z.string().min(1, "City is required"),
   recipient_district: z.string(),
   cod_amount: z.string(),
-  delivery_charge: z.string(),
   payment_type: z.string(),
   special_instructions: z.string(),
   remarks: z.string(),
@@ -520,7 +519,6 @@ function EditOrderModal({
       recipient_city: "",
       recipient_district: "",
       cod_amount: "",
-      delivery_charge: "",
       payment_type: "",
       special_instructions: "",
       remarks: "",
@@ -538,7 +536,6 @@ function EditOrderModal({
         recipient_city: order.recipient_city ?? "",
         recipient_district: order.recipient_district ?? "",
         cod_amount: order.cod_amount ?? "",
-        delivery_charge: order.delivery_charge ?? "",
         payment_type: order.payment_type ?? "",
         special_instructions: order.special_instructions ?? "",
         remarks: order.remarks ?? "",
@@ -644,10 +641,7 @@ function EditOrderModal({
               <input {...register("cod_amount")} className={inputCls} />
             </div>
 
-            <div className="flex flex-col gap-1">
-              <label className={labelCls}>Delivery Charge</label>
-              <input {...register("delivery_charge")} className={inputCls} />
-            </div>
+
 
             <div className="flex flex-col gap-1">
               <label className={labelCls}>Payment Type</label>
