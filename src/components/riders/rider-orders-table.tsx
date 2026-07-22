@@ -1159,15 +1159,14 @@ export function RiderOrdersTable({
         id: "price",
         header: "Total Price (Rs.)",
         cell: ({ row }) => {
-          const ydmDelivery = row.original.ydm_delivery_charge;
-          const isYdmDeliveryEmpty = !ydmDelivery || parseFloat(ydmDelivery) === 0;
+          const isCancelledStatus = ["CANCELLED", "RETURNING_TO_VENDOR", "RETURNED_TO_VENDOR"].includes(row.original.status);
           return (
             <div className="text-gray-700 min-w-[140px]">
               <div>Collection Amount : {row.original.cod_amount}</div>
-              {isYdmDeliveryEmpty ? (
+              {isCancelledStatus ? (
                 <div>Cancelled Charge: {row.original.ydm_cancelled_charge ?? "0.00"}</div>
               ) : (
-                <div>Delivery Charge: {ydmDelivery}</div>
+                <div>Delivery Charge: {row.original.ydm_delivery_charge ?? "0.00"}</div>
               )}
             </div>
           );
