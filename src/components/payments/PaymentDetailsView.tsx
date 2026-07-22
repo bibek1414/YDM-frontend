@@ -178,6 +178,25 @@ export function PaymentDetailsView({
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-screen-xl mx-auto p-4 md:p-8 pt-4 pb-10">
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+          .printable-area, .printable-area * {
+            visibility: visible !important;
+          }
+          .printable-area {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+          }
+        }
+      `}} />
       {/* Top Header Buttons (Hidden on Print) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
         <div className="flex items-center gap-3">
@@ -215,7 +234,7 @@ export function PaymentDetailsView({
       </div>
 
       {/* Main Print Container Sheet */}
-      <div className="bg-white p-6 md:p-10 rounded-lg border border-gray-200 flex flex-col gap-8">
+      <div className="bg-white p-6 md:p-10 rounded-lg border border-gray-200 flex flex-col gap-8 printable-area">
         {/* Top Header Info Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
           {/* Left Side: YDM Details */}
@@ -335,10 +354,10 @@ export function PaymentDetailsView({
                       {order.payment_type}
                     </td>
                     <td className="py-3 px-3 text-right text-gray-700">
-                      {displayCOD.toFixed(2)}
+                      {formatCurrency(displayCOD)}
                     </td>
                     <td className="py-3 px-3 text-right text-gray-700">
-                      {Number(charge).toFixed(2)}
+                      {formatCurrency(charge)}
                     </td>
                     <td
                       className={cn(
@@ -348,7 +367,7 @@ export function PaymentDetailsView({
                           : "text-[#2e4a62]",
                       )}
                     >
-                      {Number(order.net_amount || 0).toFixed(2)}
+                      {formatCurrency(order.net_amount)}
                     </td>
                     <td className="py-3 px-3 text-center">
                       <span className="inline-flex items-center justify-center px-2 py-0.5 rounded border border-gray-200 bg-gray-50 text-[10px] uppercase font-semibold text-gray-600">
@@ -365,10 +384,10 @@ export function PaymentDetailsView({
                   Total
                 </td>
                 <td className="py-3 px-3 text-right text-gray-900">
-                  {totalCOD.toFixed(2)}
+                  {formatCurrency(totalCOD)}
                 </td>
                 <td className="py-3 px-3 text-right text-gray-900">
-                  {totalCharge.toFixed(2)}
+                  {formatCurrency(totalCharge)}
                 </td>
                 <td
                   className={cn(
@@ -376,7 +395,7 @@ export function PaymentDetailsView({
                     totalNet < 0 ? "text-red-500" : "text-[#2e4a62]",
                   )}
                 >
-                  {totalNet.toFixed(2)}
+                  {formatCurrency(totalNet)}
                 </td>
                 <td></td>
               </tr>
