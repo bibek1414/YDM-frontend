@@ -286,7 +286,7 @@ export function PaymentsView({ userId: propUserId }: { userId?: string } = {}) {
             {/* Filter controls row */}
             <div className="flex flex-wrap items-center gap-3">
               {/* Payment Status Buttons */}
-              <div className="flex items-center gap-0.5 border border-gray-200 rounded-md p-0.5 bg-gray-50 h-8">
+              <div className="flex items-center gap-0.5 rounded-md p-0.5 bg-gray-50 h-8">
                 <button
                   onClick={() => setStatusFilter("all")}
                   className={`px-3 py-1 text-xs font-semibold rounded-xs transition-colors duration-150 ${

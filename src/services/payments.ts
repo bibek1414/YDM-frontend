@@ -75,3 +75,22 @@ export async function getCodPayments(
   return api.get<CodPaymentsResponse>(`/api/payment/?${query.toString()}`);
 }
 
+export async function getUnpaidOrders(
+  userId: string | number,
+  page: number = 1,
+  search: string = "",
+): Promise<PaymentOrdersResponse> {
+  const query = new URLSearchParams({ user_id: String(userId), page: String(page) });
+  if (search) query.set("search", search);
+  return api.get<PaymentOrdersResponse>(`/api/payment/unpaid-orders/?${query.toString()}`);
+}
+
+export async function createCodTransfer(payload: {
+  user: number | string;
+  orders: number[];
+  total_amount: number;
+}): Promise<any> {
+  return api.post<any>("/api/payment/", payload);
+}
+
+
