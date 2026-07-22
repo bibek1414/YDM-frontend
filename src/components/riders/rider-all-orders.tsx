@@ -19,6 +19,7 @@ import {
   Loader2,
   CheckCircle2,
   Check,
+  UserCheck,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -38,6 +39,7 @@ import {
   useUpdateRiderOrderStatus,
   useVerifyRiderOrder,
   useAllOrders,
+  useAssignRider,
 } from "@/src/components/orders/orders.queries";
 import { RiderPackageStats } from "@/src/components/riders/rider-package-stats";
 import { RiderCommissionStats } from "@/src/components/riders/rider-commission-stats";
@@ -210,8 +212,23 @@ export function RiderDashboardView() {
 
   // Tab state
   const [activeTab, setActiveTab] = useState<"today" | "all" | "commission">(
-    "today",
+    "all",
   );
+
+  useEffect(() => {
+    const savedTab = localStorage.getItem("rider_dashboard_active_tab");
+    if (
+      savedTab &&
+      (savedTab === "today" || savedTab === "all" || savedTab === "commission")
+    ) {
+      setActiveTab(savedTab);
+    }
+  }, []);
+
+  const handleTabChange = (tab: "today" | "all" | "commission") => {
+    setActiveTab(tab);
+    localStorage.setItem("rider_dashboard_active_tab", tab);
+  };
 
   // Date range for "all" tab
   const [dateRange, setDateRange] = useState<
@@ -271,7 +288,11 @@ export function RiderDashboardView() {
     isError: isPackageError,
     error: packageError,
     refetch: refetchPackages,
-  } = useRiderPackageStats(statsStartDate, statsEndDate, activeTab !== "commission");
+  } = useRiderPackageStats(
+    statsStartDate,
+    statsEndDate,
+    activeTab !== "commission",
+  );
 
   // Fetch commission stats
   const {
@@ -280,7 +301,11 @@ export function RiderDashboardView() {
     isError: isCommissionError,
     error: commissionError,
     refetch: refetchCommission,
-  } = useRiderCommissionStats(statsStartDate, statsEndDate, activeTab === "commission");
+  } = useRiderCommissionStats(
+    statsStartDate,
+    statsEndDate,
+    activeTab === "commission",
+  );
 
   // Fetch orders
   const statusParam = ordersStatus === "all" ? undefined : ordersStatus;
@@ -325,7 +350,9 @@ export function RiderDashboardView() {
 
   const ordersData = isAllTab ? allOrdersData : todayOrdersData;
   const isOrdersLoading = isAllTab ? isAllOrdersLoading : isTodayOrdersLoading;
-  const isOrdersFetching = isAllTab ? isAllOrdersFetching : isTodayOrdersFetching;
+  const isOrdersFetching = isAllTab
+    ? isAllOrdersFetching
+    : isTodayOrdersFetching;
   const isOrdersError = isAllTab ? isAllOrdersError : isTodayOrdersError;
   const ordersError = isAllTab ? allOrdersError : todayOrdersError;
   const refetchOrders = isAllTab ? refetchAllOrders : refetchTodayOrders;
@@ -351,7 +378,35 @@ export function RiderDashboardView() {
   // Verify order modal
   const [verifyingOrder, setVerifyingOrder] = useState<Order | null>(null);
   const [deliveryLocationType, setDeliveryLocationType] = useState<string>("");
+  const [assigningTrackingNum, setAssigningTrackingNum] = useState<
+    string | null
+  >(null);
   const { mutate: verifyOrder, isPending: isVerifying } = useVerifyRiderOrder();
+  const { mutate: assignRiderMutate } = useAssignRider();
+
+  const handleSelfAssign = (trackingNumber: string) => {
+    if (!user?.user_id) {
+      toast.error("User not found");
+      return;
+    }
+    setAssigningTrackingNum(trackingNumber);
+    assignRiderMutate(
+      {
+        order_ids: [trackingNumber],
+        rider_id: user.user_id,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Order self-assigned successfully");
+          setAssigningTrackingNum(null);
+        },
+        onError: (err: any) => {
+          toast.error(err?.message || "Failed to assign order");
+          setAssigningTrackingNum(null);
+        },
+      },
+    );
+  };
 
   // Helper functions
   const capitalize = (s: string) =>
@@ -483,23 +538,11 @@ export function RiderDashboardView() {
       <div className="flex space-x-4 border-b border-gray-200 overflow-x-auto scrollbar-none whitespace-nowrap -mx-4 px-4 sm:mx-0 sm:px-0">
         <button
           onClick={() => {
-            setActiveTab("today");
+            handleTabChange("all");
             setOrdersPage(1);
             setPaymentsPage(1);
-          }}
-          className={`pb-2 px-1 border-b-2 font-medium text-sm transition-colors focus:outline-none cursor-pointer ${
-            activeTab === "today"
-              ? "border-black text-black font-bold"
-              : "border-transparent text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          Today's Orders
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab("all");
-            setOrdersPage(1);
-            setPaymentsPage(1);
+            refetchAllOrders();
+            refetchPackages();
           }}
           className={`pb-2 px-1 border-b-2 font-medium text-sm transition-colors focus:outline-none cursor-pointer ${
             activeTab === "all"
@@ -511,9 +554,27 @@ export function RiderDashboardView() {
         </button>
         <button
           onClick={() => {
-            setActiveTab("commission");
+            handleTabChange("today");
             setOrdersPage(1);
             setPaymentsPage(1);
+            refetchTodayOrders();
+            refetchPackages();
+          }}
+          className={`pb-2 px-1 border-b-2 font-medium text-sm transition-colors focus:outline-none cursor-pointer ${
+            activeTab === "today"
+              ? "border-black text-black font-bold"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Today's Orders
+        </button>
+        <button
+          onClick={() => {
+            handleTabChange("commission");
+            setOrdersPage(1);
+            setPaymentsPage(1);
+            refetchCommission();
+            refetchPayments();
           }}
           className={`pb-2 px-1 border-b-2 font-medium text-sm transition-colors focus:outline-none cursor-pointer ${
             activeTab === "commission"
@@ -565,18 +626,20 @@ export function RiderDashboardView() {
       {/* Today's Orders / All Orders Tab */}
       {(activeTab === "today" || activeTab === "all") && (
         <div className="space-y-6">
-          <div className="space-y-4">
-            <h2 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-2">
-              Delivery Performance
-            </h2>
-            <RiderPackageStats
-              data={packageData}
-              isLoading={isPackageLoading}
-              isError={isPackageError}
-              error={packageError}
-              onRetry={refetchPackages}
-            />
-          </div>
+          {activeTab === "today" && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-2">
+                Delivery Performance
+              </h2>
+              <RiderPackageStats
+                data={packageData}
+                isLoading={isPackageLoading}
+                isError={isPackageError}
+                error={packageError}
+                onRetry={refetchPackages}
+              />
+            </div>
+          )}
 
           {/* All Orders filter bar */}
           {activeTab === "all" && (
@@ -640,10 +703,10 @@ export function RiderDashboardView() {
           {/* Orders List */}
           <div className="space-y-4 pt-4">
             <h2 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-2">
-              Assigned Orders
+              All Orders
             </h2>
 
-            {isOrdersLoading || isOrdersFetching ? (
+            {isOrdersLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[1, 2, 3, 4].map((n) => (
                   <Skeleton key={n} className="h-48 rounded-lg" />
@@ -674,7 +737,7 @@ export function RiderDashboardView() {
                 <p className="text-xs text-gray-500 mt-1 max-w-xs">
                   {searchQuery
                     ? "No orders match your search criteria."
-                    : "You have no assigned orders."}
+                    : "You have no orders."}
                 </p>
               </div>
             ) : (
@@ -786,8 +849,12 @@ export function RiderDashboardView() {
                                 <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
                                   {(typeof order.product === "string"
                                     ? order.product.split(",").map((item) => {
-                                        const [name, quantity] = item.split("-");
-                                        return { name, quantity: parseInt(quantity) || 1 };
+                                        const [name, quantity] =
+                                          item.split("-");
+                                        return {
+                                          name,
+                                          quantity: parseInt(quantity) || 1,
+                                        };
                                       })
                                     : order.product
                                   ).map((p, pIdx) => (
@@ -836,7 +903,25 @@ export function RiderDashboardView() {
                         </div>
 
                         {/* Card Footer Actions */}
-                        {!order.is_rider_verified ? (
+                        {order.assigned_rider !== Number(user?.user_id) ? (
+                          <div className="p-2.5 bg-gray-50/30 border-t border-gray-100 flex gap-2">
+                            <button
+                              onClick={() =>
+                                handleSelfAssign(order.tracking_number)
+                              }
+                              disabled={assigningTrackingNum !== null}
+                              className="flex-1 flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:bg-gray-300 text-white font-medium text-xs py-1.5 px-3 rounded-md shadow-2xs transition-colors cursor-pointer font-semibold"
+                            >
+                              {assigningTrackingNum ===
+                              order.tracking_number ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <UserCheck className="w-3.5 h-3.5" />
+                              )}
+                              <span>Self Assign</span>
+                            </button>
+                          </div>
+                        ) : !order.is_rider_verified ? (
                           <div className="p-2.5 bg-gray-50/30 border-t border-gray-100 flex gap-2">
                             <button
                               onClick={() => {
@@ -865,7 +950,9 @@ export function RiderDashboardView() {
                                       className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-medium text-xs py-1.5 px-3 rounded-md shadow-2xs transition-colors cursor-pointer"
                                     >
                                       <Phone className="w-3 h-3" />
-                                      <span className="max-[370px]:hidden">Call</span>
+                                      <span className="max-[370px]:hidden">
+                                        Call
+                                      </span>
                                     </a>
                                   )}
 
@@ -878,7 +965,9 @@ export function RiderDashboardView() {
                                     className="flex-1 flex items-center justify-center gap-1.5 bg-slate-700 hover:bg-slate-800 active:bg-slate-900 text-white font-medium text-xs py-1.5 px-3 rounded-md shadow-2xs transition-colors cursor-pointer"
                                   >
                                     <Navigation className="w-3 h-3" />
-                                    <span className="max-[370px]:hidden">Navigate</span>
+                                    <span className="max-[370px]:hidden">
+                                      Navigate
+                                    </span>
                                   </a>
 
                                   <Link
@@ -927,7 +1016,9 @@ export function RiderDashboardView() {
                         variant="outline"
                         size="sm"
                         className="h-8 sm:h-7 px-3 sm:px-2.5 text-xs flex-1 sm:flex-initial"
-                        disabled={!hasPrev || isOrdersLoading || isOrdersFetching}
+                        disabled={
+                          !hasPrev || isOrdersLoading || isOrdersFetching
+                        }
                         onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}
                       >
                         <ChevronLeft className="w-3.5 h-3.5 mr-1" />
@@ -937,7 +1028,9 @@ export function RiderDashboardView() {
                         variant="outline"
                         size="sm"
                         className="h-8 sm:h-7 px-3 sm:px-2.5 text-xs flex-1 sm:flex-initial"
-                        disabled={!hasNext || isOrdersLoading || isOrdersFetching}
+                        disabled={
+                          !hasNext || isOrdersLoading || isOrdersFetching
+                        }
                         onClick={() => setOrdersPage((p) => p + 1)}
                       >
                         Next

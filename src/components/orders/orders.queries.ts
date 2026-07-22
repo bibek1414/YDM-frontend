@@ -79,8 +79,56 @@ export function useAssignRider() {
     return useMutation({
         mutationFn: ({ order_ids, rider_id }: { order_ids: string[]; rider_id: string }) =>
             assignRider({ order_ids, rider_id }),
+        onMutate: async ({ order_ids, rider_id }) => {
+            await queryClient.cancelQueries({ queryKey: ORDERS_QUERY_KEYS.all });
+
+            const previousData = queryClient.getQueriesData<any>({ queryKey: ORDERS_QUERY_KEYS.all });
+
+            // Optimistically update systemAll cache
+            queryClient.setQueriesData(
+                { queryKey: [...ORDERS_QUERY_KEYS.all, "systemAll"] },
+                (old: any) => {
+                    if (!old?.results) return old;
+                    return {
+                        ...old,
+                        results: old.results.map((o: any) =>
+                            order_ids.includes(o.tracking_number)
+                                ? { ...o, assigned_rider: Number(rider_id) }
+                                : o
+                        ),
+                    };
+                }
+            );
+
+            // Optimistically update rider cache
+            queryClient.setQueriesData(
+                { queryKey: [...ORDERS_QUERY_KEYS.all, "rider"] },
+                (old: any) => {
+                    if (!old?.results) return old;
+                    return {
+                        ...old,
+                        results: old.results.map((o: any) =>
+                            order_ids.includes(o.tracking_number)
+                                ? { ...o, assigned_rider: Number(rider_id) }
+                                : o
+                        ),
+                    };
+                }
+            );
+
+            return { previousData };
+        },
+        onError: (_err, _vars, context) => {
+            if (context?.previousData) {
+                context.previousData.forEach(([key, value]) => {
+                    queryClient.setQueryData(key, value);
+                });
+            }
+        },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ORDERS_QUERY_KEYS.all });
+            queryClient.invalidateQueries({ queryKey: [...ORDERS_QUERY_KEYS.all, "systemAll"] });
+            queryClient.invalidateQueries({ queryKey: [...ORDERS_QUERY_KEYS.all, "rider"] });
+            queryClient.invalidateQueries({ queryKey: RIDER_QUERY_KEYS.all });
         },
     });
 }
