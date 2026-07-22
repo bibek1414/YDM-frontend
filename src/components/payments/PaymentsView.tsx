@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@/src/lib/auth-context";
 import { useVendorPaymentOrders } from "./payments.queries";
 import { PaymentOrder } from "@/src/services/payments";
+import { CodTransfersView } from "./CodTransfersView";
 import { type ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/data-table";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -389,15 +390,7 @@ export function PaymentsView({ userId: propUserId }: { userId?: string } = {}) {
       )}
 
       {activeTab === "cod_transfers" && (
-        <div className="bg-white p-12 rounded-sm border border-gray-200 text-center flex flex-col items-center justify-center gap-3">
-          <FileSpreadsheet className="w-12 h-12 text-gray-300" />
-          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-            COD Transfer History
-          </h3>
-          <p className="text-xs text-gray-500 max-w-sm">
-            COD transfers detail log is currently being configured and will be available shortly.
-          </p>
-        </div>
+        <CodTransfersView userId={userId} />
       )}
 
       {activeTab === "change_logs" && (

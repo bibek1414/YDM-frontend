@@ -40,3 +40,38 @@ export async function getPaymentOrders(
 
   return api.get<PaymentOrdersResponse>(`/api/payment/orders/?${query.toString()}`);
 }
+
+export interface CodPayment {
+  id: number;
+  payment_number: string;
+  transfer_date: string;
+  order_count: number;
+  amount: string;
+  status: string;
+}
+
+export interface GetCodPaymentsParams {
+  status?: string;
+  start_date?: string;
+  end_date?: string;
+}
+
+export interface CodPaymentsResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: CodPayment[];
+}
+
+export async function getCodPayments(
+  userId: string | number,
+  params?: GetCodPaymentsParams,
+): Promise<CodPaymentsResponse> {
+  const query = new URLSearchParams({ user_id: String(userId) });
+  if (params?.status) query.set("status", params.status);
+  if (params?.start_date) query.set("start_date", params.start_date);
+  if (params?.end_date) query.set("end_date", params.end_date);
+
+  return api.get<CodPaymentsResponse>(`/api/payment/?${query.toString()}`);
+}
+
