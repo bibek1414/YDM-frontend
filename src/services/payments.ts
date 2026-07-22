@@ -11,6 +11,7 @@ export interface PaymentOrder {
   ydm_cancellation_charge: number | null;
   net_amount: number;
   payment_status: string;
+  status?: string;
   cod_transferred?: string | number;
   balance?: string | number;
   returned?: string | number;
@@ -79,9 +80,13 @@ export async function getUnpaidOrders(
   userId: string | number,
   page: number = 1,
   search: string = "",
+  start_date?: string,
+  end_date?: string,
 ): Promise<PaymentOrdersResponse> {
   const query = new URLSearchParams({ user_id: String(userId), page: String(page) });
   if (search) query.set("search", search);
+  if (start_date) query.set("start_date", start_date);
+  if (end_date) query.set("end_date", end_date);
   return api.get<PaymentOrdersResponse>(`/api/payment/unpaid-orders/?${query.toString()}`);
 }
 

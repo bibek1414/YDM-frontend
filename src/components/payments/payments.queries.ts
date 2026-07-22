@@ -41,10 +41,16 @@ export function useVendorCodPayments(
   });
 }
 
-export function useUnpaidOrders(userId: string | number | undefined, page: number = 1, search: string = "") {
+export function useUnpaidOrders(
+  userId: string | number | undefined,
+  page: number = 1,
+  search: string = "",
+  start_date?: string,
+  end_date?: string,
+) {
   return useQuery({
-    queryKey: [...PAYMENTS_QUERY_KEYS.unpaidOrders(userId), page, search] as const,
-    queryFn: () => getUnpaidOrders(userId!, page, search),
+    queryKey: [...PAYMENTS_QUERY_KEYS.unpaidOrders(userId), page, search, start_date, end_date] as const,
+    queryFn: () => getUnpaidOrders(userId!, page, search, start_date, end_date),
     enabled: !!userId,
   });
 }

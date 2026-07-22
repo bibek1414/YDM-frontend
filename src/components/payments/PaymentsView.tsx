@@ -26,7 +26,11 @@ import {
 import { format } from "date-fns";
 import { type DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 function formatCurrency(value: number | string | undefined | null) {
@@ -57,14 +61,18 @@ function buildColumns(): ColumnDef<PaymentOrder>[] {
       accessorKey: "recipient_name",
       header: "Receiver",
       cell: ({ getValue }) => (
-        <div className="text-gray-700 font-medium">{getValue() as string || "N/A"}</div>
+        <div className="text-gray-700 font-medium">
+          {(getValue() as string) || "N/A"}
+        </div>
       ),
     },
     {
       accessorKey: "cod",
       header: "COD",
       cell: ({ getValue }) => (
-        <div className="text-gray-700">{formatCurrency(getValue() as string)}</div>
+        <div className="text-gray-700">
+          {formatCurrency(getValue() as string)}
+        </div>
       ),
     },
     {
@@ -72,9 +80,7 @@ function buildColumns(): ColumnDef<PaymentOrder>[] {
       header: "Delivery Charge",
       cell: ({ row }) => {
         const order = row.original;
-        const charge = order.ydm_cancellation_charge !== null 
-          ? order.ydm_cancellation_charge 
-          : (order.delivery_charge ?? 0);
+        const charge = order.delivery_charge;
         return <div className="text-gray-600">{formatCurrency(charge)}</div>;
       },
     },
@@ -82,7 +88,9 @@ function buildColumns(): ColumnDef<PaymentOrder>[] {
       accessorKey: "net_amount",
       header: "Net",
       cell: ({ getValue }) => (
-        <div className="text-[#2e4a62] font-semibold">{formatCurrency(getValue() as number)}</div>
+        <div className="text-[#2e4a62] font-semibold">
+          {formatCurrency(getValue() as number)}
+        </div>
       ),
     },
     {
@@ -91,12 +99,20 @@ function buildColumns(): ColumnDef<PaymentOrder>[] {
       cell: ({ row }) => {
         const order = row.original;
         if (order.balance !== undefined) {
-          return <div className="text-red-500 font-medium">{formatCurrency(order.balance)}</div>;
+          return (
+            <div className="text-red-500 font-medium">
+              {formatCurrency(order.balance)}
+            </div>
+          );
         }
         // Fallback calculation: if Paid/Completed, balance is 0, else net_amount
-        const isPaid = order.payment_status?.toLowerCase() === "paid" || order.payment_status?.toLowerCase() === "completed";
+        const isPaid =
+          order.payment_status?.toLowerCase() === "paid" ||
+          order.payment_status?.toLowerCase() === "completed";
         const val = isPaid ? 0 : order.net_amount;
-        return <div className="text-red-500 font-medium">{formatCurrency(val)}</div>;
+        return (
+          <div className="text-red-500 font-medium">{formatCurrency(val)}</div>
+        );
       },
     },
     {
@@ -104,8 +120,10 @@ function buildColumns(): ColumnDef<PaymentOrder>[] {
       header: () => <div className="text-center">Payment Status</div>,
       cell: ({ getValue }) => {
         const status = (getValue() as string) || "Pending";
-        const isPaid = status.toLowerCase() === "paid" || status.toLowerCase() === "completed";
-        
+        const isPaid =
+          status.toLowerCase() === "paid" ||
+          status.toLowerCase() === "completed";
+
         return (
           <div className="text-center">
             <span
@@ -129,7 +147,9 @@ export function PaymentsView({ userId: propUserId }: { userId?: string } = {}) {
   const userId = propUserId ?? user?.user_id;
 
   // Active tab state
-  const [activeTab, setActiveTab] = useState<"order_wise" | "cod_transfers" | "change_logs">("order_wise");
+  const [activeTab, setActiveTab] = useState<
+    "order_wise" | "cod_transfers" | "change_logs"
+  >("order_wise");
 
   // Filter inputs (reactive)
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -138,13 +158,15 @@ export function PaymentsView({ userId: propUserId }: { userId?: string } = {}) {
   // Automatically derived applied filters
   const appliedFilters = {
     status: statusFilter === "all" ? undefined : statusFilter,
-    start_date: dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined,
+    start_date: dateRange?.from
+      ? format(dateRange.from, "yyyy-MM-dd")
+      : undefined,
     end_date: dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined,
   };
 
   const { data, isLoading, isFetching } = useVendorPaymentOrders(
     userId,
-    activeTab === "order_wise" ? appliedFilters : {}
+    activeTab === "order_wise" ? appliedFilters : {},
   );
 
   const columns = buildColumns();
@@ -178,17 +200,21 @@ export function PaymentsView({ userId: propUserId }: { userId?: string } = {}) {
       const charge = Number(
         order.ydm_cancellation_charge !== null
           ? order.ydm_cancellation_charge
-          : (order.delivery_charge ?? 0)
+          : (order.delivery_charge ?? 0),
       ).toFixed(2);
       const net = Number(order.net_amount || 0).toFixed(2);
-      
-      const isPaid = order.payment_status?.toLowerCase() === "paid" || order.payment_status?.toLowerCase() === "completed";
+
+      const isPaid =
+        order.payment_status?.toLowerCase() === "paid" ||
+        order.payment_status?.toLowerCase() === "completed";
       const balance = Number(
         order.balance !== undefined
           ? order.balance
-          : (isPaid ? 0 : order.net_amount)
+          : isPaid
+            ? 0
+            : order.net_amount,
       ).toFixed(2);
-      
+
       const status = order.payment_status || "Pending";
 
       return [
@@ -205,10 +231,13 @@ export function PaymentsView({ userId: propUserId }: { userId?: string } = {}) {
     const csvContent = [headers.join(","), ...rows].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    
+
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `payment_report_vendor_${userId || "export"}.csv`);
+    link.setAttribute(
+      "download",
+      `payment_report_vendor_${userId || "export"}.csv`,
+    );
     link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
@@ -276,7 +305,8 @@ export function PaymentsView({ userId: propUserId }: { userId?: string } = {}) {
                   />
                   <TooltipContent>
                     <p className="text-xs max-w-xs">
-                      View cash on delivery, charges, net totals, and transfer balances for orders.
+                      View cash on delivery, charges, net totals, and transfer
+                      balances for orders.
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -327,15 +357,19 @@ export function PaymentsView({ userId: propUserId }: { userId?: string } = {}) {
                     className={cn(
                       buttonVariants({
                         variant: "outline",
-                        className: "justify-start px-2.5 font-normal h-8 w-full rounded-xs text-xs text-gray-500 transition-colors bg-white hover:bg-white hover:text-gray-500",
+                        className:
+                          "justify-start px-2.5 font-normal h-8 w-full rounded-xs text-xs text-gray-500 transition-colors bg-white hover:bg-white hover:text-gray-500",
                       }),
-                      dateRange?.from ? "border-orange-400" : "border-gray-200"
+                      dateRange?.from ? "border-orange-400" : "border-gray-200",
                     )}
                   >
                     <CalendarIcon className="mr-2 h-3.5 w-3.5" />
                     {dateRange?.from ? (
                       dateRange.to ? (
-                        <>{format(dateRange.from, "LLL dd, y")} – {format(dateRange.to, "LLL dd, y")}</>
+                        <>
+                          {format(dateRange.from, "LLL dd, y")} –{" "}
+                          {format(dateRange.to, "LLL dd, y")}
+                        </>
                       ) : (
                         format(dateRange.from, "LLL dd, y")
                       )
@@ -389,9 +423,7 @@ export function PaymentsView({ userId: propUserId }: { userId?: string } = {}) {
         </div>
       )}
 
-      {activeTab === "cod_transfers" && (
-        <CodTransfersView userId={userId} />
-      )}
+      {activeTab === "cod_transfers" && <CodTransfersView userId={userId} />}
 
       {activeTab === "change_logs" && (
         <div className="bg-white p-12 rounded-sm border border-gray-200 text-center flex flex-col items-center justify-center gap-3">
@@ -400,7 +432,8 @@ export function PaymentsView({ userId: propUserId }: { userId?: string } = {}) {
             Order Change History Logs
           </h3>
           <p className="text-xs text-gray-500 max-w-sm">
-            Detailed logs showing modifications to orders, status shifts, and timeline events are under configuration.
+            Detailed logs showing modifications to orders, status shifts, and
+            timeline events are under configuration.
           </p>
         </div>
       )}

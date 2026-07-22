@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/lib/auth-context";
 import { useVendorCodPayments } from "./payments.queries";
 import { CodPayment } from "@/src/services/payments";
 import { type ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/data-table";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { CreateTransferDialog } from "./CreateTransferDialog";
 import {
   HelpCircle,
   Download,
@@ -111,15 +111,13 @@ function buildColumns(): ColumnDef<CodPayment>[] {
 
 export function CodTransfersView({ userId: propUserId }: { userId?: string } = {}) {
   const { user } = useAuth();
+  const router = useRouter();
   const userId = propUserId ?? user?.user_id;
   const isYdm = user?.role === "ydm";
 
   // Filter inputs (reactive)
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-
-  // Modal open state
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   // Automatically derived applied filters for transfers list
   const appliedFilters = {
@@ -136,10 +134,6 @@ export function CodTransfersView({ userId: propUserId }: { userId?: string } = {
   const handleClearFilter = () => {
     setStatusFilter("all");
     setDateRange(undefined);
-  };
-
-  const handleOpenChange = (open: boolean) => {
-    setIsCreateOpen(open);
   };
 
   // Client-side CSV export
@@ -305,10 +299,10 @@ export function CodTransfersView({ userId: propUserId }: { userId?: string } = {
             Export CSV
           </Button>
 
-          {/* YDM Admin Create Option */}
+          {/* YDM Admin Create Option - Navigates to a separate dedicated page */}
           {isYdm && (
             <Button
-              onClick={() => setIsCreateOpen(true)}
+              onClick={() => router.push(`/dashboard/vendors/${userId}/payments/create`)}
               className="h-8 text-xs bg-[#e2722b] hover:bg-[#d0631c] text-white gap-1.5 rounded-full px-4 border-0"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -325,15 +319,6 @@ export function CodTransfersView({ userId: propUserId }: { userId?: string } = {
         isLoading={isLoading}
         emptyMessage="No COD transfers available."
       />
-
-      {/* Create COD Transfer Modal */}
-      {isYdm && (
-        <CreateTransferDialog
-          isOpen={isCreateOpen}
-          onOpenChange={handleOpenChange}
-          userId={userId}
-        />
-      )}
     </div>
   );
 }
