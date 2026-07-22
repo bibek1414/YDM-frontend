@@ -5,6 +5,7 @@ import {
   GetCodPaymentsParams,
   getUnpaidOrders,
   createCodTransfer,
+  getCodPaymentDetail,
 } from "@/src/services/payments";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -17,6 +18,8 @@ export const PAYMENTS_QUERY_KEYS = {
     ["payments", "cod", userId, params] as const,
   unpaidOrders: (userId: string | number | undefined) =>
     ["payments", "unpaid-orders", userId] as const,
+  codPaymentDetail: (paymentId: string | number) =>
+    ["payments", "cod-detail", paymentId] as const,
 };
 
 export function useVendorPaymentOrders(
@@ -67,6 +70,14 @@ export function useCreateCodTransfer() {
     onError: (error: any) => {
       toast.error(error?.message || error?.detail || "Failed to create COD Transfer");
     },
+  });
+}
+
+export function useCodPaymentDetail(paymentId: string | number) {
+  return useQuery({
+    queryKey: PAYMENTS_QUERY_KEYS.codPaymentDetail(paymentId),
+    queryFn: () => getCodPaymentDetail(paymentId),
+    enabled: !!paymentId,
   });
 }
 

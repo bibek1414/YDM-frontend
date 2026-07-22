@@ -42,7 +42,7 @@ function formatDate(dateStr: string) {
   });
 }
 
-function buildColumns(): ColumnDef<CodPayment>[] {
+function buildColumns(onPaymentClick: (id: number) => void): ColumnDef<CodPayment>[] {
   return [
     {
       id: "sn",
@@ -57,11 +57,17 @@ function buildColumns(): ColumnDef<CodPayment>[] {
     {
       accessorKey: "payment_number",
       header: "Payment Number",
-      cell: ({ getValue }) => (
-        <div className="font-semibold text-[#2e4a62] hover:underline cursor-pointer">
-          {getValue() as string || "N/A"}
-        </div>
-      ),
+      cell: ({ row }) => {
+        const payment = row.original;
+        return (
+          <div
+            onClick={() => onPaymentClick(payment.id)}
+            className="font-semibold text-[#2e4a62] hover:underline cursor-pointer"
+          >
+            {payment.payment_number || "N/A"}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "transfer_date",
@@ -128,7 +134,15 @@ export function CodTransfersView({ userId: propUserId }: { userId?: string } = {
 
   const { data, isLoading, isFetching } = useVendorCodPayments(userId, appliedFilters);
 
-  const columns = buildColumns();
+  const handlePaymentClick = (paymentId: number) => {
+    if (isYdm) {
+      router.push(`/dashboard/vendors/${userId}/payments/${paymentId}`);
+    } else {
+      router.push(`/dashboard/payments/${paymentId}`);
+    }
+  };
+
+  const columns = buildColumns(handlePaymentClick);
   const codPayments = data?.results ?? [];
 
   const handleClearFilter = () => {

@@ -98,4 +98,72 @@ export async function createCodTransfer(payload: {
   return api.post<any>("/api/payment/", payload);
 }
 
+export interface CodPaymentOrderDetail {
+  tracking_number: string;
+  external_order_code: string | null;
+  sender_name: string;
+  sender_phone: string;
+  recipient_name: string;
+  recipient_phone: string;
+  recipient_address: string;
+  recipient_city: string;
+  recipient_district: string;
+  cod_amount: string;
+  delivery_charge: string;
+  ydm_delivery_charge: string | null;
+  ydm_cancelled_charge: string | null;
+  net_amount: number;
+  payment_type: string;
+  status: string;
+  assigned_rider: number | null;
+  assigned_rider_name: string;
+  is_rider_verified: boolean;
+  created_at: string;
+  latest_status_comment: string;
+}
+
+export interface CodPaymentDetail {
+  id: number;
+  payment_number: string;
+  user: number;
+  user_detail: {
+    id: number;
+    username: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    phone_number: string;
+    address: string;
+    role: string;
+    is_active: boolean;
+    is_staff: boolean;
+    date_joined: string;
+  };
+  created_by: number;
+  created_by_detail: {
+    id: number;
+    username: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    phone_number: string;
+    address: string;
+    role: string;
+    is_active: boolean;
+    is_staff: boolean;
+    date_joined: string;
+  };
+  orders: number[];
+  orders_detail: CodPaymentOrderDetail[];
+  total_amount: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function getCodPaymentDetail(paymentId: string | number): Promise<CodPaymentDetail> {
+  return api.get<CodPaymentDetail>(`/api/payment/${paymentId}/`);
+}
+
+
 
