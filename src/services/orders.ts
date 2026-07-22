@@ -77,6 +77,9 @@ export interface Order {
   delivery_location_type?: string | null;
   is_rider_verified?: boolean;
   latest_status_comment?: string | null;
+  ydm_delivery_charge?: string | null;
+  ydm_cancelled_charge?: string | null;
+  net_amount?: number | null;
 }
 
 export async function getOrdersByVendor(

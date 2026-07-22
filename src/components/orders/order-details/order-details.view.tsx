@@ -377,8 +377,20 @@ export function OrderDetailsView({ trackingNumber }: OrderDetailsViewProps) {
                                 <td className="py-3">Rs. {order.cod_amount}</td>
                             </tr>
                             <tr className="border-b border-gray-50 last:border-0 text-gray-600">
-                                <td className="py-3">Delivery charge</td>
-                                <td className="py-3">Rs. {order.delivery_charge}</td>
+                                <td className="py-3">YDM Delivery charge</td>
+                                <td className="py-3">Rs. {order.ydm_delivery_charge ?? "0.00"}</td>
+                            </tr>
+                            <tr className="border-b border-gray-50 last:border-0 text-gray-600">
+                                <td className="py-3">YDM Cancelled charge</td>
+                                <td className="py-3">Rs. {order.ydm_cancelled_charge ?? "0.00"}</td>
+                            </tr>
+                            <tr className="border-b border-gray-50 last:border-0 text-gray-600">
+                                <td className="py-3">Net Amount</td>
+                                <td className="py-3">
+                                    {order.net_amount !== null && order.net_amount !== undefined
+                                        ? `Rs. ${order.net_amount}`
+                                        : "-"}
+                                </td>
                             </tr>
                             <tr className="border-b border-gray-50 last:border-0 text-gray-600">
                                 <td className="py-3">Payment Type</td>

@@ -1085,11 +1085,30 @@ export function MyOrdersView({
     {
       id: "price",
       header: "Total Price (Rs.)",
+      cell: ({ row }) => {
+        const ydmDelivery = row.original.ydm_delivery_charge;
+        const isYdmDeliveryEmpty = !ydmDelivery || parseFloat(ydmDelivery) === 0;
+        return (
+          <div className="text-gray-700 min-w-[140px]">
+            <div>Collection Amount : {row.original.cod_amount}</div>
+            {isYdmDeliveryEmpty ? (
+              <div>Cancelled Charge: {row.original.ydm_cancelled_charge ?? "0.00"}</div>
+            ) : (
+              <div>Delivery Charge: {ydmDelivery}</div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      id: "net_amount",
+      header: "Net Amount (Rs.)",
       cell: ({ row }) => (
-        <div className="text-gray-700 min-w-[140px]">
-          <div>Collection Amount : {row.original.cod_amount}</div>
-          <div>DeliveryCharge: {row.original.delivery_charge}</div>
-        </div>
+        <span className="text-gray-700 font-medium">
+          {row.original.net_amount !== null && row.original.net_amount !== undefined
+            ? `Rs. ${row.original.net_amount}`
+            : "-"}
+        </span>
       ),
     },
     ...(user?.role === "ydm" ? [{
