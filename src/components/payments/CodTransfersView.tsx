@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/lib/auth-context";
-import { useVendorCodPayments } from "./payments.queries";
-import { CodPayment } from "@/src/services/payments";
+import { useVendorCodPayments, useDeleteCodTransfer } from "./payments.queries";
+import { CodPayment, getCodPaymentDetail } from "@/src/services/payments";
 import { type ColumnDef } from "@tanstack/react-table";
+import { toast } from "sonner";
 import { DataTable } from "@/components/ui/data-table";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -13,6 +14,8 @@ import {
   Download,
   CalendarIcon,
   Plus,
+  Eye,
+  Trash2,
 } from "lucide-react";
 import {
   Tooltip,
@@ -42,7 +45,12 @@ function formatDate(dateStr: string) {
   });
 }
 
-function buildColumns(onPaymentClick: (id: number) => void): ColumnDef<CodPayment>[] {
+function buildColumns(
+  onPaymentClick: (id: number) => void,
+  onDownloadClick: (id: number, paymentNumber: string) => void,
+  onDeleteClick: (id: number) => void,
+  isYdm: boolean,
+): ColumnDef<CodPayment>[] {
   return [
     {
       id: "sn",
@@ -112,6 +120,40 @@ function buildColumns(onPaymentClick: (id: number) => void): ColumnDef<CodPaymen
         );
       },
     },
+    {
+      id: "actions",
+      header: () => <div className="text-center">Actions</div>,
+      cell: ({ row }) => {
+        const payment = row.original;
+        return (
+          <div className="flex items-center justify-center gap-1.5">
+            <button
+              onClick={() => onPaymentClick(payment.id)}
+              title="View Details"
+              className="p-1.5 text-gray-600 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors cursor-pointer"
+            >
+              <Eye className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => onDownloadClick(payment.id, payment.payment_number)}
+              title="Download CSV"
+              className="p-1.5 text-gray-600 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5" />
+            </button>
+            {isYdm && (
+              <button
+                onClick={() => onDeleteClick(payment.id)}
+                title="Delete Transfer"
+                className="p-1.5 text-red-600 bg-red-50 border border-red-200 rounded hover:bg-red-100 transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        );
+      },
+    },
   ];
 }
 
@@ -134,6 +176,10 @@ export function CodTransfersView({ userId: propUserId }: { userId?: string } = {
 
   const { data, isLoading, isFetching } = useVendorCodPayments(userId, appliedFilters);
 
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
+
+  const deleteMutation = useDeleteCodTransfer();
+
   const handlePaymentClick = (paymentId: number) => {
     if (isYdm) {
       router.push(`/dashboard/vendors/${userId}/payments/${paymentId}`);
@@ -142,7 +188,85 @@ export function CodTransfersView({ userId: propUserId }: { userId?: string } = {
     }
   };
 
-  const columns = buildColumns(handlePaymentClick);
+  const handleDeleteClick = (paymentId: number) => {
+    if (window.confirm("Are you sure you want to delete this COD Transfer?")) {
+      deleteMutation.mutate(paymentId);
+    }
+  };
+
+  const handleDownloadCSV = async (paymentId: number, paymentNumber: string) => {
+    try {
+      setDownloadingId(paymentId);
+      const detail = await getCodPaymentDetail(paymentId);
+      const orders = detail.orders_detail ?? [];
+      if (!orders.length) {
+        toast.error("No orders in this payment");
+        return;
+      }
+      
+      const headers = [
+        "Tracking Number",
+        "Sender Name",
+        "Sender Phone",
+        "Recipient Name",
+        "Recipient Phone",
+        "Recipient Address",
+        "Recipient City",
+        "Recipient District",
+        "COD Amount",
+        "Delivery Charge",
+        "Net Amount",
+        "Payment Type",
+        "Status",
+      ];
+
+      const rows = orders.map((order) => {
+        const statusLower = order.status?.toLowerCase() || "";
+        const isCancelledStatus =
+          statusLower === "cancelled" ||
+          statusLower === "returning_to_vendor" ||
+          statusLower === "returned_to_vendor";
+        const charge = isCancelledStatus
+          ? (order.ydm_cancelled_charge ?? "0.00")
+          : (order.ydm_delivery_charge ?? order.delivery_charge ?? "0.00");
+
+        return [
+          `"${order.tracking_number}"`,
+          `"${(order.sender_name || "").replace(/"/g, '""')}"`,
+          `"${order.sender_phone || ""}"`,
+          `"${(order.recipient_name || "").replace(/"/g, '""')}"`,
+          `"${order.recipient_phone || ""}"`,
+          `"${(order.recipient_address || "").replace(/"/g, '""')}"`,
+          `"${order.recipient_city || ""}"`,
+          `"${order.recipient_district || ""}"`,
+          Number(order.cod_amount || 0).toFixed(2),
+          Number(charge || 0).toFixed(2),
+          Number(order.net_amount || 0).toFixed(2),
+          `"${order.payment_type || ""}"`,
+          `"${order.status || ""}"`,
+        ].join(",");
+      });
+
+      const csvContent = [headers.join(","), ...rows].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `orders_report_${paymentNumber}.csv`);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("CSV downloaded successfully");
+    } catch (err: any) {
+      toast.error("Failed to download CSV: " + (err.message || "Unknown error"));
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const columns = buildColumns(handlePaymentClick, handleDownloadCSV, handleDeleteClick, isYdm);
   const codPayments = data?.results ?? [];
 
   const handleClearFilter = () => {

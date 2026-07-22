@@ -165,5 +165,9 @@ export async function getCodPaymentDetail(paymentId: string | number): Promise<C
   return api.get<CodPaymentDetail>(`/api/payment/${paymentId}/`);
 }
 
+export async function deleteCodTransfer(paymentId: string | number): Promise<void> {
+  return api.delete(`/api/payment/${paymentId}/`);
+}
+
 
 
