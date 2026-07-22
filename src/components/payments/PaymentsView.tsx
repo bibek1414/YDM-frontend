@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/src/lib/auth-context";
 import { useVendorPaymentOrders } from "./payments.queries";
 import { PaymentOrder } from "@/src/services/payments";
@@ -142,14 +143,22 @@ function buildColumns(): ColumnDef<PaymentOrder>[] {
   ];
 }
 
-export function PaymentsView({ userId: propUserId }: { userId?: string } = {}) {
+function PaymentsViewContent({ userId: propUserId }: { userId?: string } = {}) {
   const { user } = useAuth();
   const userId = propUserId ?? user?.user_id;
 
-  // Active tab state
-  const [activeTab, setActiveTab] = useState<
-    "order_wise" | "cod_transfers" | "change_logs"
-  >("order_wise");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Active tab state derived from URL
+  const activeTab = (searchParams.get("tab") as "order_wise" | "cod_transfers" | "change_logs") || "order_wise";
+
+  const setActiveTab = (tab: "order_wise" | "cod_transfers" | "change_logs") => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", tab);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   // Filter inputs (reactive)
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -270,21 +279,6 @@ export function PaymentsView({ userId: propUserId }: { userId?: string } = {}) {
         >
           <History className="w-3.5 h-3.5" />
           COD Transfers
-        </button>
-
-        <button
-          onClick={() => setActiveTab("change_logs")}
-          className={`flex items-center gap-2 px-5 py-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all duration-150 ${
-            activeTab === "change_logs"
-              ? "border-orange-500 text-[#2e4a62]"
-              : "border-transparent text-gray-500 hover:text-gray-800"
-          }`}
-        >
-          <Activity className="w-3.5 h-3.5" />
-          Order Change Logs
-          <span className="bg-green-100 text-green-700 text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase">
-            NEW
-          </span>
         </button>
       </div>
 
@@ -438,5 +432,13 @@ export function PaymentsView({ userId: propUserId }: { userId?: string } = {}) {
         </div>
       )}
     </div>
+  );
+}
+
+export function PaymentsView(props: { userId?: string }) {
+  return (
+    <Suspense fallback={<div className="p-4 text-xs text-gray-500">Loading payments...</div>}>
+      <PaymentsViewContent {...props} />
+    </Suspense>
   );
 }
