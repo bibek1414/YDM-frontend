@@ -180,20 +180,58 @@ export function PaymentDetailsView({
     <div className="flex flex-col gap-6 w-full max-w-screen-xl mx-auto p-4 md:p-8 pt-4 pb-10">
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
-          body * {
-            visibility: hidden !important;
+          @page {
+            size: auto;
+            margin: 0mm;
           }
-          .printable-area, .printable-area * {
-            visibility: visible !important;
+          
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            height: auto !important;
+            min-height: 0 !important;
+            background: white !important;
           }
-          .printable-area {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
+
+          /* Reset all ancestor elements for printing */
+          html:has(.printable-area), 
+          body:has(.printable-area), 
+          div:has(.printable-area), 
+          main:has(.printable-area) {
+            height: auto !important;
+            min-height: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
             border: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            overflow: visible !important;
+          }
+
+          /* Hide all non-printable elements */
+          body *:not(:has(.printable-area)):not(.printable-area):not(.printable-area *) {
+            display: none !important;
+          }
+
+          /* Style the printable area */
+          .printable-area {
+            display: flex !important;
+            flex-direction: column !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 15mm !important;
+            margin: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+            background: white !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          /* Ensure table rows do not break across pages awkwardly */
+          tr {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
         }
       `}} />

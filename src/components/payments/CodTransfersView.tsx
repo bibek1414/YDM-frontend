@@ -28,6 +28,17 @@ import { type DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 function formatCurrency(value: number | string | undefined | null) {
   const num = Number(value ?? 0);
@@ -142,13 +153,35 @@ function buildColumns(
               <Download className="w-3.5 h-3.5" />
             </button>
             {isYdm && (
-              <button
-                onClick={() => onDeleteClick(payment.id)}
-                title="Delete Transfer"
-                className="p-1.5 text-red-600 bg-red-50 border border-red-200 rounded hover:bg-red-100 transition-colors cursor-pointer"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
+              <AlertDialog>
+                <AlertDialogTrigger
+                  render={
+                    <button
+                      title="Delete Transfer"
+                      className="p-1.5 text-red-600 bg-red-50 border border-red-200 rounded hover:bg-red-100 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  }
+                />
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete the COD Transfer {payment.payment_number}.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => onDeleteClick(payment.id)}
+                      variant="destructive"
+                    >
+                      Yes, Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
         );
@@ -189,9 +222,7 @@ export function CodTransfersView({ userId: propUserId }: { userId?: string } = {
   };
 
   const handleDeleteClick = (paymentId: number) => {
-    if (window.confirm("Are you sure you want to delete this COD Transfer?")) {
-      deleteMutation.mutate(paymentId);
-    }
+    deleteMutation.mutate(paymentId);
   };
 
   const handleDownloadCSV = async (paymentId: number, paymentNumber: string) => {
