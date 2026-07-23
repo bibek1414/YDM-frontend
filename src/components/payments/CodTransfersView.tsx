@@ -142,7 +142,7 @@ function buildColumns(
             <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
               <Select
                 value={selectValue}
-                onValueChange={(val) => onStatusChange(payment.id, val)}
+                onValueChange={(val) => onStatusChange(payment.id, val || "")}
               >
                 <SelectTrigger className="w-[110px] h-7 text-xs border-gray-200">
                   <SelectValue placeholder="Status" />
