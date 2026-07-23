@@ -132,7 +132,9 @@ function buildColumns(): ColumnDef<PaymentOrder>[] {
       header: () => <div className="text-center">Order Status</div>,
       cell: ({ getValue }) => {
         const rawStatus = (getValue() as string) || "";
-        const formattedStatus = rawStatus ? rawStatus.replace(/_/g, " ") : "N/A";
+        const formattedStatus = rawStatus
+          ? rawStatus.replace(/_/g, " ")
+          : "N/A";
         const badgeClass = getOrderStatusBadgeClass(rawStatus);
 
         return (
@@ -182,9 +184,15 @@ function PaymentsViewContent({ userId: propUserId }: { userId?: string } = {}) {
   const searchParams = useSearchParams();
 
   // Active tab state derived from URL
-  const activeTab = (searchParams.get("tab") as "order_wise" | "cod_transfers" | "change_logs") || "order_wise";
+  const activeTab =
+    (searchParams.get("tab") as
+      | "order_wise"
+      | "cod_transfers"
+      | "change_logs") || "order_wise";
 
-  const setActiveTab = (tab: "order_wise" | "cod_transfers" | "change_logs") => {
+  const setActiveTab = (
+    tab: "order_wise" | "cod_transfers" | "change_logs",
+  ) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", tab);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
@@ -255,7 +263,9 @@ function PaymentsViewContent({ userId: propUserId }: { userId?: string } = {}) {
             : order.net_amount,
       ).toFixed(2);
 
-      const orderStatus = order.status ? order.status.replace(/_/g, " ") : "N/A";
+      const orderStatus = order.status
+        ? order.status.replace(/_/g, " ")
+        : "N/A";
       const paymentStatus = order.payment_status || "Pending";
 
       return [
@@ -470,7 +480,11 @@ function PaymentsViewContent({ userId: propUserId }: { userId?: string } = {}) {
 
 export function PaymentsView(props: { userId?: string }) {
   return (
-    <Suspense fallback={<div className="p-4 text-xs text-gray-500">Loading payments...</div>}>
+    <Suspense
+      fallback={
+        <div className="p-4 text-xs text-gray-500">Loading payments...</div>
+      }
+    >
       <PaymentsViewContent {...props} />
     </Suspense>
   );
