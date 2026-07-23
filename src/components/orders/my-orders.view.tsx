@@ -443,7 +443,7 @@ function TrackingCodeCell({ value }: { value: string }) {
           </button>
         </div>
       </div>
-      <span className="text-[#d85860] font-medium">
+      <span className="text-[#d85860] text-xs font-medium whitespace-nowrap">
         {value}
       </span>
     </div>
@@ -959,7 +959,7 @@ export function MyOrdersView({
       id: "sn",
       header: "S.N.",
       cell: ({ row }) => (
-        <span className="text-gray-600 font-medium text-center block">
+        <span className="text-gray-600 text-xs font-medium text-center block">
           {row.index + 1}
         </span>
       ),
@@ -981,8 +981,8 @@ export function MyOrdersView({
         });
         return (
           <div className="bg-[#5a6268] text-white text-[10px] rounded px-2 py-1 mx-auto w-fit font-medium text-center">
-            <div>{dateStr}</div>
-            <div>{timeStr}</div>
+            <div className="whitespace-nowrap">{dateStr},</div>
+            <div className="whitespace-nowrap">{timeStr}</div>
           </div>
         );
       },
@@ -1067,10 +1067,10 @@ export function MyOrdersView({
       id: "customerInfo",
       header: "Customer Info",
       cell: ({ row }) => (
-        <div className="text-gray-700">
-          <div className="font-medium">{row.original.recipient_name}</div>
-          <div>{row.original.recipient_phone}</div>
-          <div className="font-light mt-1">{row.original.recipient_address}</div>
+        <div className="text-gray-700 text-xs">
+          <div className="font-medium text-gray-900">{row.original.recipient_name}</div>
+          <div className="text-gray-500 text-[11px]">{row.original.recipient_phone}</div>
+          <div className="font-light mt-0.5 text-gray-500 text-[11px]">{row.original.recipient_address}</div>
         </div>
       ),
     },
@@ -1086,12 +1086,12 @@ export function MyOrdersView({
       cell: ({ row }) => {
         const isCancelledStatus = ["CANCELLED", "RETURNING_TO_VENDOR", "RETURNED_TO_VENDOR"].includes(row.original.status);
         return (
-          <div className="text-gray-700 min-w-[140px]">
+          <div className="text-gray-700 text-xs min-w-[140px]">
             <div>Collection Amount : {row.original.cod_amount}</div>
             {isCancelledStatus ? (
-              <div>Cancelled Charge: {row.original.ydm_cancelled_charge ?? "0.00"}</div>
+              <div className="text-gray-500 text-[11px]">Cancelled Charge: {row.original.ydm_cancelled_charge ?? "0.00"}</div>
             ) : (
-              <div>Delivery Charge: {row.original.ydm_delivery_charge ?? "0.00"}</div>
+              <div className="text-gray-500 text-[11px]">Delivery Charge: {row.original.ydm_delivery_charge ?? "0.00"}</div>
             )}
           </div>
         );
@@ -1101,7 +1101,7 @@ export function MyOrdersView({
       id: "net_amount",
       header: "Net Amount (Rs.)",
       cell: ({ row }) => (
-        <span className="text-gray-700 font-medium">
+        <span className="text-gray-700 text-xs font-medium whitespace-nowrap">
           {row.original.net_amount !== null && row.original.net_amount !== undefined
             ? `Rs. ${row.original.net_amount}`
             : "-"}
