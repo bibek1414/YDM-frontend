@@ -15,7 +15,6 @@ import {
   Coins,
   History,
   Activity,
-  FileSpreadsheet,
   CalendarIcon,
 } from "lucide-react";
 import {
@@ -40,6 +39,18 @@ function formatCurrency(value: number | string | undefined | null) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
+}
+
+// Helper for order status badge styling
+function getOrderStatusBadgeClass(status: string) {
+  switch (status?.toUpperCase()) {
+    case "DELIVERED":
+      return "bg-green-50 text-green-700 border-green-200";
+    case "CANCELLED":
+      return "bg-red-50 text-red-700 border-red-200";
+    default:
+      return "bg-gray-50 text-gray-600 border-gray-200";
+  }
 }
 
 // Column definition generator
@@ -113,6 +124,25 @@ function buildColumns(): ColumnDef<PaymentOrder>[] {
         const val = isPaid ? 0 : order.net_amount;
         return (
           <div className="text-red-500 font-medium">{formatCurrency(val)}</div>
+        );
+      },
+    },
+    {
+      accessorKey: "status",
+      header: () => <div className="text-center">Order Status</div>,
+      cell: ({ getValue }) => {
+        const rawStatus = (getValue() as string) || "";
+        const formattedStatus = rawStatus ? rawStatus.replace(/_/g, " ") : "N/A";
+        const badgeClass = getOrderStatusBadgeClass(rawStatus);
+
+        return (
+          <div className="text-center">
+            <span
+              className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider border ${badgeClass}`}
+            >
+              {formattedStatus}
+            </span>
+          </div>
         );
       },
     },
@@ -198,6 +228,7 @@ function PaymentsViewContent({ userId: propUserId }: { userId?: string } = {}) {
       "Delivery Charge",
       "Net",
       "Balance",
+      "Order Status",
       "Payment Status",
     ];
 
@@ -224,7 +255,8 @@ function PaymentsViewContent({ userId: propUserId }: { userId?: string } = {}) {
             : order.net_amount,
       ).toFixed(2);
 
-      const status = order.payment_status || "Pending";
+      const orderStatus = order.status ? order.status.replace(/_/g, " ") : "N/A";
+      const paymentStatus = order.payment_status || "Pending";
 
       return [
         `"${displayId}"`,
@@ -233,7 +265,8 @@ function PaymentsViewContent({ userId: propUserId }: { userId?: string } = {}) {
         charge,
         net,
         balance,
-        `"${status}"`,
+        `"${orderStatus}"`,
+        `"${paymentStatus}"`,
       ].join(",");
     });
 
