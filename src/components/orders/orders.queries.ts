@@ -84,6 +84,31 @@ export function useAssignRider() {
 
             const previousData = queryClient.getQueriesData<any>({ queryKey: ORDERS_QUERY_KEYS.all });
 
+            // Fetch riders list from cache to get rider name
+            const ridersData = queryClient.getQueryData<any>(ORDERS_QUERY_KEYS.all);
+            const rider = ridersData?.results?.find((r: any) => String(r.id) === String(rider_id));
+            const riderName = rider ? `${rider.first_name} ${rider.last_name}` : undefined;
+
+            // Optimistically update vendor cache
+            queryClient.setQueriesData(
+                { queryKey: [...ORDERS_QUERY_KEYS.all, "vendor"] },
+                (old: any) => {
+                    if (!old?.results) return old;
+                    return {
+                        ...old,
+                        results: old.results.map((o: any) =>
+                            order_ids.includes(o.tracking_number)
+                                ? { 
+                                    ...o, 
+                                    assigned_rider: Number(rider_id),
+                                    assigned_rider_name: riderName || o.assigned_rider_name
+                                  }
+                                : o
+                        ),
+                    };
+                }
+            );
+
             // Optimistically update systemAll cache
             queryClient.setQueriesData(
                 { queryKey: [...ORDERS_QUERY_KEYS.all, "systemAll"] },
@@ -93,7 +118,11 @@ export function useAssignRider() {
                         ...old,
                         results: old.results.map((o: any) =>
                             order_ids.includes(o.tracking_number)
-                                ? { ...o, assigned_rider: Number(rider_id) }
+                                ? { 
+                                    ...o, 
+                                    assigned_rider: Number(rider_id),
+                                    assigned_rider_name: riderName || o.assigned_rider_name
+                                  }
                                 : o
                         ),
                     };
@@ -109,7 +138,11 @@ export function useAssignRider() {
                         ...old,
                         results: old.results.map((o: any) =>
                             order_ids.includes(o.tracking_number)
-                                ? { ...o, assigned_rider: Number(rider_id) }
+                                ? { 
+                                    ...o, 
+                                    assigned_rider: Number(rider_id),
+                                    assigned_rider_name: riderName || o.assigned_rider_name
+                                  }
                                 : o
                         ),
                     };
@@ -126,8 +159,7 @@ export function useAssignRider() {
             }
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [...ORDERS_QUERY_KEYS.all, "systemAll"] });
-            queryClient.invalidateQueries({ queryKey: [...ORDERS_QUERY_KEYS.all, "rider"] });
+            queryClient.invalidateQueries({ queryKey: ORDERS_QUERY_KEYS.all });
             queryClient.invalidateQueries({ queryKey: RIDER_QUERY_KEYS.all });
         },
     });
