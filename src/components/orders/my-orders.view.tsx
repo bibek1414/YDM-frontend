@@ -641,7 +641,11 @@ function EditOrderModal({
                   control={control}
                   name="assigned_rider"
                   render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={order?.status === "ORDER_PLACED"}
+                    >
                       <SelectTrigger className="border border-gray-200 rounded-xs px-2 py-1.5 h-auto text-xs focus:outline-none focus:ring-0 focus:border-gray-400 bg-white w-full shadow-none">
                         <SelectValue placeholder="Assign rider" />
                       </SelectTrigger>
@@ -1111,6 +1115,7 @@ export function MyOrdersView({
         <div className="text-gray-700 min-w-[140px]">
           <Select
             value={row.original.assigned_rider?.toString() || ""}
+            disabled={row.original.status === "ORDER_PLACED"}
             onValueChange={(val) => {
               assignRiderMutation.mutate({
                 order_ids: [row.original.tracking_number],
@@ -1293,9 +1298,25 @@ export function MyOrdersView({
                       <li key={rider.id}>
                         <button
                           onClick={() => {
-                            const order_ids = Object.entries(selectedOrderIds)
+                            const allOrders = orders?.results ?? [];
+                            const selected_ids = Object.entries(selectedOrderIds)
                               .filter(([, v]) => v)
                               .map(([id]) => id);
+                            const order_ids = selected_ids.filter((id) => {
+                              const ord = allOrders.find(o => o.tracking_number === id);
+                              return ord?.status !== "ORDER_PLACED";
+                            });
+                            const hasOrderPlaced = selected_ids.length !== order_ids.length;
+
+                            if (order_ids.length === 0) {
+                              toast.error("Cannot assign rider to orders with status 'Order Placed'");
+                              return;
+                            }
+
+                            if (hasOrderPlaced) {
+                              toast.info("Skipping orders with status 'Order Placed'");
+                            }
+
                             assignRiderMutation.mutate(
                               { order_ids, rider_id: String(rider.id) },
                               {

@@ -679,7 +679,11 @@ function EditOrderModal({
                   control={control}
                   name="assigned_rider"
                   render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={order?.status === "ORDER_PLACED"}
+                    >
                       <SelectTrigger className="border border-gray-200 rounded-xs px-2 py-1.5 h-auto text-xs focus:outline-none focus:ring-0 focus:border-gray-400 bg-white w-full shadow-none">
                         <SelectValue placeholder="Assign rider" />
                       </SelectTrigger>
