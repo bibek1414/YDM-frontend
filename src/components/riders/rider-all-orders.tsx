@@ -909,8 +909,11 @@ export function RiderDashboardView() {
                               onClick={() =>
                                 handleSelfAssign(order.tracking_number)
                               }
-                              disabled={assigningTrackingNum !== null}
-                              className="flex-1 flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:bg-gray-300 text-white font-medium text-xs py-1.5 px-3 rounded-md shadow-2xs transition-colors cursor-pointer font-semibold"
+                              disabled={
+                                assigningTrackingNum !== null ||
+                                order.status === "ORDER_PLACED"
+                              }
+                              className="flex-1 flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium text-xs py-1.5 px-3 rounded-md shadow-2xs transition-colors cursor-pointer font-semibold"
                             >
                               {assigningTrackingNum ===
                               order.tracking_number ? (
