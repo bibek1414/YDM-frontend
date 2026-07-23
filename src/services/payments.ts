@@ -169,5 +169,12 @@ export async function deleteCodTransfer(paymentId: string | number): Promise<voi
   return api.delete(`/api/payment/${paymentId}/`);
 }
 
+export async function updateCodTransfer(
+  paymentId: string | number,
+  data: Partial<CodPayment>
+): Promise<CodPayment> {
+  return api.patch<CodPayment>(`/api/payment/${paymentId}/`, data);
+}
+
 
 

@@ -7,6 +7,7 @@ import {
   createCodTransfer,
   getCodPaymentDetail,
   deleteCodTransfer,
+  updateCodTransfer,
 } from "@/src/services/payments";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -92,6 +93,21 @@ export function useDeleteCodTransfer() {
     },
     onError: (error: any) => {
       toast.error(error?.message || error?.detail || "Failed to delete COD Transfer");
+    },
+  });
+}
+
+export function useUpdateCodTransfer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ paymentId, status }: { paymentId: string | number; status: string }) =>
+      updateCodTransfer(paymentId, { status }),
+    onSuccess: () => {
+      toast.success("COD Transfer status updated successfully");
+      queryClient.invalidateQueries({ queryKey: PAYMENTS_QUERY_KEYS.all });
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || error?.detail || "Failed to update COD Transfer");
     },
   });
 }

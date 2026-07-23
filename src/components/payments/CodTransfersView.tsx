@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/lib/auth-context";
-import { useVendorCodPayments, useDeleteCodTransfer } from "./payments.queries";
+import { useVendorCodPayments, useDeleteCodTransfer, useUpdateCodTransfer } from "./payments.queries";
 import { CodPayment, getCodPaymentDetail } from "@/src/services/payments";
 import { type ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
@@ -26,7 +26,18 @@ import {
 import { format } from "date-fns";
 import { type DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -61,6 +72,8 @@ function buildColumns(
   onDownloadClick: (id: number, paymentNumber: string) => void,
   onDeleteClick: (id: number) => void,
   isYdm: boolean,
+  isVendor: boolean,
+  onStatusChange: (id: number, status: string) => void,
 ): ColumnDef<CodPayment>[] {
   return [
     {
@@ -99,23 +112,50 @@ function buildColumns(
       accessorKey: "order_count",
       header: "Order Count",
       cell: ({ getValue }) => (
-        <div className="text-gray-700 font-medium text-center">{getValue() as number ?? 0}</div>
+        <div className="text-gray-700 font-medium text-center">
+          {(getValue() as number) ?? 0}
+        </div>
       ),
     },
     {
       accessorKey: "amount",
       header: "Amount",
       cell: ({ getValue }) => (
-        <div className="text-[#2e4a62] font-semibold">{formatCurrency(getValue() as string)}</div>
+        <div className="text-[#2e4a62] font-semibold">
+          {formatCurrency(getValue() as string)}
+        </div>
       ),
     },
     {
       accessorKey: "status",
       header: () => <div className="text-center">Status</div>,
-      cell: ({ getValue }) => {
+      cell: ({ row, getValue }) => {
+        const payment = row.original;
         const status = (getValue() as string) || "Pending";
-        const isPaid = status.toLowerCase() === "paid" || status.toLowerCase() === "completed";
-        
+        const isPaid =
+          status.toLowerCase() === "paid" ||
+          status.toLowerCase() === "completed";
+
+        if (isVendor) {
+          const selectValue = isPaid ? "Paid" : "Pending";
+          return (
+            <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
+              <Select
+                value={selectValue}
+                onValueChange={(val) => onStatusChange(payment.id, val)}
+              >
+                <SelectTrigger className="w-[110px] h-7 text-xs border-gray-200">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="Paid">Paid</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          );
+        }
+
         return (
           <div className="text-center">
             <span
@@ -146,7 +186,9 @@ function buildColumns(
               <Eye className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => onDownloadClick(payment.id, payment.payment_number)}
+              onClick={() =>
+                onDownloadClick(payment.id, payment.payment_number)
+              }
               title="Download CSV"
               className="p-1.5 text-gray-600 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors cursor-pointer"
             >
@@ -166,9 +208,12 @@ function buildColumns(
                 />
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogTitle>
+                      Are you absolutely sure?
+                    </AlertDialogTitle>
                     <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete the COD Transfer {payment.payment_number}.
+                      This action cannot be undone. This will permanently delete
+                      the COD Transfer {payment.payment_number}.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -190,11 +235,14 @@ function buildColumns(
   ];
 }
 
-export function CodTransfersView({ userId: propUserId }: { userId?: string } = {}) {
+export function CodTransfersView({
+  userId: propUserId,
+}: { userId?: string } = {}) {
   const { user } = useAuth();
   const router = useRouter();
   const userId = propUserId ?? user?.user_id;
   const isYdm = user?.role === "ydm";
+  const isVendor = user?.role === "vendor";
 
   // Filter inputs (reactive)
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -203,15 +251,21 @@ export function CodTransfersView({ userId: propUserId }: { userId?: string } = {
   // Automatically derived applied filters for transfers list
   const appliedFilters = {
     status: statusFilter === "all" ? undefined : statusFilter,
-    start_date: dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined,
+    start_date: dateRange?.from
+      ? format(dateRange.from, "yyyy-MM-dd")
+      : undefined,
     end_date: dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined,
   };
 
-  const { data, isLoading, isFetching } = useVendorCodPayments(userId, appliedFilters);
+  const { data, isLoading, isFetching } = useVendorCodPayments(
+    userId,
+    appliedFilters,
+  );
 
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
   const deleteMutation = useDeleteCodTransfer();
+  const updateMutation = useUpdateCodTransfer();
 
   const handlePaymentClick = (paymentId: number) => {
     if (isYdm) {
@@ -225,7 +279,14 @@ export function CodTransfersView({ userId: propUserId }: { userId?: string } = {
     deleteMutation.mutate(paymentId);
   };
 
-  const handleDownloadCSV = async (paymentId: number, paymentNumber: string) => {
+  const handleStatusChange = (paymentId: number, status: string) => {
+    updateMutation.mutate({ paymentId, status });
+  };
+
+  const handleDownloadCSV = async (
+    paymentId: number,
+    paymentNumber: string,
+  ) => {
     try {
       setDownloadingId(paymentId);
       const detail = await getCodPaymentDetail(paymentId);
@@ -234,7 +295,7 @@ export function CodTransfersView({ userId: propUserId }: { userId?: string } = {
         toast.error("No orders in this payment");
         return;
       }
-      
+
       const headers = [
         "Tracking Number",
         "Sender Name",
@@ -291,13 +352,22 @@ export function CodTransfersView({ userId: propUserId }: { userId?: string } = {
       document.body.removeChild(link);
       toast.success("CSV downloaded successfully");
     } catch (err: any) {
-      toast.error("Failed to download CSV: " + (err.message || "Unknown error"));
+      toast.error(
+        "Failed to download CSV: " + (err.message || "Unknown error"),
+      );
     } finally {
       setDownloadingId(null);
     }
   };
 
-  const columns = buildColumns(handlePaymentClick, handleDownloadCSV, handleDeleteClick, isYdm);
+  const columns = buildColumns(
+    handlePaymentClick,
+    handleDownloadCSV,
+    handleDeleteClick,
+    isYdm,
+    isVendor,
+    handleStatusChange,
+  );
   const codPayments = data?.results ?? [];
 
   const handleClearFilter = () => {
@@ -340,10 +410,13 @@ export function CodTransfersView({ userId: propUserId }: { userId?: string } = {
     const csvContent = [headers.join(","), ...rows].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    
+
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `cod_transfers_vendor_${userId || "export"}.csv`);
+    link.setAttribute(
+      "download",
+      `cod_transfers_vendor_${userId || "export"}.csv`,
+    );
     link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
@@ -367,7 +440,8 @@ export function CodTransfersView({ userId: propUserId }: { userId?: string } = {
               />
               <TooltipContent>
                 <p className="text-xs max-w-xs">
-                  View and track bank/cash transfers for Cash on Delivery balances.
+                  View and track bank/cash transfers for Cash on Delivery
+                  balances.
                 </p>
               </TooltipContent>
             </Tooltip>
@@ -418,15 +492,19 @@ export function CodTransfersView({ userId: propUserId }: { userId?: string } = {
                 className={cn(
                   buttonVariants({
                     variant: "outline",
-                    className: "justify-start px-2.5 font-normal h-8 w-full rounded-xs text-xs text-gray-500 transition-colors bg-white hover:bg-white hover:text-gray-500",
+                    className:
+                      "justify-start px-2.5 font-normal h-8 w-full rounded-xs text-xs text-gray-500 transition-colors bg-white hover:bg-white hover:text-gray-500",
                   }),
-                  dateRange?.from ? "border-orange-400" : "border-gray-200"
+                  dateRange?.from ? "border-orange-400" : "border-gray-200",
                 )}
               >
                 <CalendarIcon className="mr-2 h-3.5 w-3.5" />
                 {dateRange?.from ? (
                   dateRange.to ? (
-                    <>{format(dateRange.from, "LLL dd, y")} – {format(dateRange.to, "LLL dd, y")}</>
+                    <>
+                      {format(dateRange.from, "LLL dd, y")} –{" "}
+                      {format(dateRange.to, "LLL dd, y")}
+                    </>
                   ) : (
                     format(dateRange.from, "LLL dd, y")
                   )
@@ -471,7 +549,9 @@ export function CodTransfersView({ userId: propUserId }: { userId?: string } = {
           {/* YDM Admin Create Option - Navigates to a separate dedicated page */}
           {isYdm && (
             <Button
-              onClick={() => router.push(`/dashboard/vendors/${userId}/payments/create`)}
+              onClick={() =>
+                router.push(`/dashboard/vendors/${userId}/payments/create`)
+              }
               className="h-8 text-xs bg-[#e2722b] hover:bg-[#d0631c] text-white gap-1.5 rounded-full px-4 border-0"
             >
               <Plus className="w-3.5 h-3.5" />
