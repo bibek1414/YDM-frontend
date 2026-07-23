@@ -118,7 +118,7 @@ export async function getVendors(
 }
 
 export async function getVendorById(id: string): Promise<Vendor> {
-  return api.get<Vendor>(`/api/account/vendors/${id}`);
+  return api.get<Vendor>(`/api/account/users/${id}/`);
 }
 
 export async function getVendorDashboardStats(
