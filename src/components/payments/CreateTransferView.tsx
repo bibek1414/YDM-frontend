@@ -94,6 +94,10 @@ export function CreateTransferView({ userId }: CreateTransferViewProps) {
     (sum, order) => sum + Number(order.net_amount || 0),
     0,
   );
+  const totalDeliveryAmount = selectedOrdersList.reduce((sum, order) => {
+    const charge = order.delivery_charge;
+    return sum + Number(charge);
+  }, 0);
 
   const handleToggleOrder = (order: PaymentOrder) => {
     setSelectedOrders((prev) => {
@@ -122,7 +126,7 @@ export function CreateTransferView({ userId }: CreateTransferViewProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => router.push(`/dashboard/vendors/${userId}/payments`)}
+            onClick={() => router.push(`/dashboard/vendors/${userId}/payments?tab=cod_transfers`)}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-700 font-normal border border-gray-200 rounded hover:bg-gray-50 transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -274,7 +278,10 @@ export function CreateTransferView({ userId }: CreateTransferViewProps) {
                       const displayId = order.tracking_number || `#${order.id}`;
                       const isSelected = !!selectedOrders[order.id];
 
-                      const charge = order.delivery_charge;
+                      const charge =
+                        order.ydm_cancellation_charge ??
+                        order.delivery_charge ??
+                        0;
 
                       const isPaid =
                         order.payment_status?.toLowerCase() === "paid" ||
@@ -390,6 +397,14 @@ export function CreateTransferView({ userId }: CreateTransferViewProps) {
             </div>
             <div className="flex flex-col gap-1 border-t border-gray-100 pt-3 mt-1">
               <span className="text-[10px] uppercase font-bold text-gray-400">
+                Delivery Amount
+              </span>
+              <span className="text-sm font-semibold text-gray-700">
+                {formatCurrency(totalDeliveryAmount)}
+              </span>
+            </div>
+            <div className="flex flex-col gap-1 border-t border-gray-100 pt-2">
+              <span className="text-[10px] uppercase font-bold text-gray-400">
                 Total Transfer Amount
               </span>
               <span className="text-xl font-bold text-[#2e4a62]">
@@ -407,10 +422,11 @@ export function CreateTransferView({ userId }: CreateTransferViewProps) {
                     user: Number(userId),
                     orders: selectedIds,
                     total_amount: Number(totalSelectedAmount.toFixed(2)),
+                    delivery_amount: Number(totalDeliveryAmount.toFixed(2)),
                   },
                   {
                     onSuccess: () => {
-                      router.push(`/dashboard/vendors/${userId}/payments`);
+                      router.push(`/dashboard/vendors/${userId}/payments?tab=cod_transfers`);
                     },
                   },
                 );
@@ -435,7 +451,7 @@ export function CreateTransferView({ userId }: CreateTransferViewProps) {
             <Button
               variant="outline"
               onClick={() =>
-                router.push(`/dashboard/vendors/${userId}/payments`)
+                router.push(`/dashboard/vendors/${userId}/payments?tab=cod_transfers`)
               }
               className="w-full h-10 text-xs text-red-600 hover:text-red-700 font-semibold border border-red-200 hover:border-red-300 hover:bg-red-50/50 rounded-md transition-colors bg-white"
               disabled={createCodTransferMutation.isPending}

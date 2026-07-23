@@ -63,7 +63,7 @@ export function useUnpaidOrders(
 export function useCreateCodTransfer() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { user: number | string; orders: number[]; total_amount: number }) =>
+    mutationFn: (payload: { user: number | string; orders: number[]; total_amount: number; delivery_amount?: number }) =>
       createCodTransfer(payload),
     onSuccess: () => {
       toast.success("COD Transfer created successfully");

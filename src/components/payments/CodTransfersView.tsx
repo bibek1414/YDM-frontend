@@ -118,6 +118,15 @@ function buildColumns(
       ),
     },
     {
+      accessorKey: "delivery_amount",
+      header: "Delivery Amount",
+      cell: ({ getValue }) => (
+        <div className="text-gray-600 font-medium">
+          {formatCurrency(getValue() as string)}
+        </div>
+      ),
+    },
+    {
       accessorKey: "amount",
       header: "Amount",
       cell: ({ getValue }) => (
@@ -385,6 +394,7 @@ export function CodTransfersView({
       "Payment Number",
       "Transfer Date",
       "Order Count",
+      "Delivery Amount",
       "Amount",
       "Status",
     ];
@@ -394,6 +404,7 @@ export function CodTransfersView({
       const paymentNum = payment.payment_number || "N/A";
       const transferDate = formatDate(payment.transfer_date);
       const orderCount = payment.order_count ?? 0;
+      const deliveryAmount = Number(payment.delivery_amount || 0).toFixed(2);
       const amount = Number(payment.amount || 0).toFixed(2);
       const status = payment.status || "Pending";
 
@@ -402,6 +413,7 @@ export function CodTransfersView({
         `"${paymentNum}"`,
         `"${transferDate}"`,
         orderCount,
+        deliveryAmount,
         amount,
         `"${status}"`,
       ].join(",");

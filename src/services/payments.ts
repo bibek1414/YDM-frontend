@@ -47,6 +47,7 @@ export interface CodPayment {
   payment_number: string;
   transfer_date: string;
   order_count: number;
+  delivery_amount?: string;
   amount: string;
   status: string;
 }
@@ -94,6 +95,7 @@ export async function createCodTransfer(payload: {
   user: number | string;
   orders: number[];
   total_amount: number;
+  delivery_amount?: number;
 }): Promise<any> {
   return api.post<any>("/api/payment/", payload);
 }
