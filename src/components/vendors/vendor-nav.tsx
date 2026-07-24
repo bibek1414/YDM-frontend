@@ -35,9 +35,9 @@ export function VendorNav({ vendorId }: VendorNavProps) {
       label: "Return Pending",
       href: `${baseHref}/orders/return-pending`,
     },
-    // { icon: Receipt, label: "Invoice", href: `${baseHref}/invoice` },
     { icon: FileBarChart, label: "Statement", href: `${baseHref}/statement` },
     { icon: Coins, label: "Payments", href: `${baseHref}/payments` },
+    { icon: Receipt, label: "Delivery Bill", href: `${baseHref}/delivery-bills` },
   ];
 
   return (
