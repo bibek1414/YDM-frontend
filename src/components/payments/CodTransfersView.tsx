@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/lib/auth-context";
-import { useVendorCodPayments, useDeleteCodTransfer, useUpdateCodTransfer } from "./payments.queries";
+import {
+  useVendorCodPayments,
+  useDeleteCodTransfer,
+  useUpdateCodTransfer,
+} from "./payments.queries";
 import { CodPayment, getCodPaymentDetail } from "@/src/services/payments";
 import { type ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
@@ -16,6 +20,8 @@ import {
   Plus,
   Eye,
   Trash2,
+  Printer,
+  Loader2,
 } from "lucide-react";
 import {
   Tooltip,
@@ -69,11 +75,12 @@ function formatDate(dateStr: string) {
 
 function buildColumns(
   onPaymentClick: (id: number) => void,
-  onDownloadClick: (id: number, paymentNumber: string) => void,
+  onPrintClick: (id: number) => void,
   onDeleteClick: (id: number) => void,
   isYdm: boolean,
   isVendor: boolean,
   onStatusChange: (id: number, status: string) => void,
+  printingId?: number | null,
 ): ColumnDef<CodPayment>[] {
   return [
     {
@@ -148,7 +155,10 @@ function buildColumns(
         if (isVendor) {
           const selectValue = isPaid ? "Paid" : "Pending";
           return (
-            <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="flex justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
               <Select
                 value={selectValue}
                 onValueChange={(val) => onStatusChange(payment.id, val || "")}
@@ -185,6 +195,7 @@ function buildColumns(
       header: () => <div className="text-center">Actions</div>,
       cell: ({ row }) => {
         const payment = row.original;
+        const isPrinting = printingId === payment.id;
         return (
           <div className="flex items-center justify-center gap-1.5">
             <button
@@ -195,13 +206,16 @@ function buildColumns(
               <Eye className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() =>
-                onDownloadClick(payment.id, payment.payment_number)
-              }
-              title="Download CSV"
-              className="p-1.5 text-gray-600 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors cursor-pointer"
+              onClick={() => onPrintClick(payment.id)}
+              disabled={isPrinting}
+              title="Print Transfer"
+              className="p-1.5 text-gray-600 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors cursor-pointer disabled:opacity-50"
             >
-              <Download className="w-3.5 h-3.5" />
+              {isPrinting ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-[#2e4a62]" />
+              ) : (
+                <Printer className="w-3.5 h-3.5" />
+              )}
             </button>
             {isYdm && (
               <AlertDialog>
@@ -271,7 +285,7 @@ export function CodTransfersView({
     appliedFilters,
   );
 
-  const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [printingId, setPrintingId] = useState<number | null>(null);
 
   const deleteMutation = useDeleteCodTransfer();
   const updateMutation = useUpdateCodTransfer();
@@ -292,90 +306,364 @@ export function CodTransfersView({
     updateMutation.mutate({ paymentId, status });
   };
 
-  const handleDownloadCSV = async (
-    paymentId: number,
-    paymentNumber: string,
-  ) => {
+  const handlePrintTransfer = async (paymentId: number) => {
     try {
-      setDownloadingId(paymentId);
+      setPrintingId(paymentId);
+      toast.info("Fetching transfer details for printing...");
       const detail = await getCodPaymentDetail(paymentId);
       const orders = detail.orders_detail ?? [];
-      if (!orders.length) {
-        toast.error("No orders in this payment");
-        return;
-      }
 
-      const headers = [
-        "Tracking Number",
-        "Sender Name",
-        "Sender Phone",
-        "Recipient Name",
-        "Recipient Phone",
-        "Recipient Address",
-        "Recipient City",
-        "Recipient District",
-        "COD Amount",
-        "Delivery Charge",
-        "Net Amount",
-        "Payment Type",
-        "Status",
-      ];
+      let totalCharge = 0;
+      let totalCOD = 0;
+      let totalNet = 0;
 
-      const rows = orders.map((order) => {
+      orders.forEach((order) => {
         const statusLower = order.status?.toLowerCase() || "";
         const isCancelledStatus =
           statusLower === "cancelled" ||
           statusLower === "returning_to_vendor" ||
           statusLower === "returned_to_vendor";
         const charge = isCancelledStatus
-          ? (order.ydm_cancelled_charge ?? "0.00")
-          : (order.ydm_delivery_charge ?? order.delivery_charge ?? "0.00");
+          ? Number(order.ydm_cancelled_charge ?? 0)
+          : Number(order.ydm_delivery_charge ?? order.delivery_charge ?? 0);
+        const displayCOD = isCancelledStatus
+          ? 0
+          : Number(order.net_amount || 0) + charge;
+        const net = Number(order.net_amount || 0);
 
-        return [
-          `"${order.tracking_number}"`,
-          `"${(order.sender_name || "").replace(/"/g, '""')}"`,
-          `"${order.sender_phone || ""}"`,
-          `"${(order.recipient_name || "").replace(/"/g, '""')}"`,
-          `"${order.recipient_phone || ""}"`,
-          `"${(order.recipient_address || "").replace(/"/g, '""')}"`,
-          `"${order.recipient_city || ""}"`,
-          `"${order.recipient_district || ""}"`,
-          Number(order.cod_amount || 0).toFixed(2),
-          Number(charge || 0).toFixed(2),
-          Number(order.net_amount || 0).toFixed(2),
-          `"${order.payment_type || ""}"`,
-          `"${order.status || ""}"`,
-        ].join(",");
+        totalCharge += charge;
+        totalCOD += displayCOD;
+        totalNet += net;
       });
 
-      const csvContent = [headers.join(","), ...rows].join("\n");
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
+      const formatDateStr = (dateStr: string) => {
+        if (!dateStr) return "N/A";
+        return new Date(dateStr).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        });
+      };
 
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", `orders_report_${paymentNumber}.csv`);
-      link.style.visibility = "hidden";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.success("CSV downloaded successfully");
+      const formatCurrencyVal = (val: number) => {
+        const num = Number(val || 0);
+        const formatted = Math.abs(num).toLocaleString("en-IN", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+        return num < 0 ? `- Rs. ${formatted}` : `Rs. ${formatted}`;
+      };
+
+      const tableRows = orders
+        .map((order, idx) => {
+          const statusLower = order.status?.toLowerCase() || "";
+          const isCancelledStatus =
+            statusLower === "cancelled" ||
+            statusLower === "returning_to_vendor" ||
+            statusLower === "returned_to_vendor";
+
+          const charge = isCancelledStatus
+            ? Number(order.ydm_cancelled_charge ?? 0)
+            : Number(order.ydm_delivery_charge ?? order.delivery_charge ?? 0);
+
+          const isRTV =
+            statusLower === "returning_to_vendor" ||
+            statusLower === "returned_to_vendor";
+          const isCancelled = statusLower === "cancelled";
+          const suffix = isRTV ? " - RTV" : isCancelled ? " - CANCELLED" : "";
+          const displayOrderId = `${order.tracking_number}${suffix}`;
+          const displayCOD = isCancelledStatus
+            ? 0
+            : Number(order.net_amount || 0) + charge;
+
+          return `
+            <tr>
+              <td style="padding: 6px 8px; text-align: center; color: #4b5563;">${idx + 1}</td>
+              <td style="padding: 6px 8px; font-weight: 600; color: #2e4a62;">${displayOrderId}</td>
+              <td style="padding: 6px 8px; color: #1f2937;">${order.recipient_name || "N/A"}</td>
+              <td style="padding: 6px 8px; color: #4b5563;">${order.payment_type || "N/A"}</td>
+              <td style="padding: 6px 8px; text-align: right; color: #374151;">${formatCurrencyVal(displayCOD)}</td>
+              <td style="padding: 6px 8px; text-align: right; color: #374151;">${formatCurrencyVal(charge)}</td>
+              <td style="padding: 6px 8px; text-align: right; font-weight: 600; color: ${order.net_amount < 0 ? "#ef4444" : "#2e4a62"};">${formatCurrencyVal(order.net_amount)}</td>
+              <td style="padding: 6px 8px; text-align: center;">
+                <span class="status-badge">
+                  ${(order.status || "").replace(/_/g, " ")}
+                </span>
+              </td>
+            </tr>
+          `;
+        })
+        .join("");
+
+      const creatorName = `${detail.created_by_detail?.first_name || ""} ${detail.created_by_detail?.last_name || ""}`.trim();
+      const userName = `${detail.user_detail?.first_name || ""} ${detail.user_detail?.last_name || ""}`.trim();
+
+      const printHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>COD Transfer #${detail.payment_number}</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 8mm;
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      background: #ffffff;
+      color: #1f2937;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    body {
+      padding: 4mm;
+    }
+    .printable-area {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+    }
+    .header-grid {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .left-header {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .company-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #1f2937;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+    }
+    .creator-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-top: 2px;
+    }
+    .sub-info {
+      font-size: 11px;
+      color: #6b7280;
+    }
+    .right-header {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      text-align: right;
+    }
+    .transfer-title {
+      font-size: 20px;
+      font-weight: 900;
+      color: #2e4a62;
+      text-transform: uppercase;
+      letter-spacing: -0.025em;
+    }
+    .payment-num {
+      font-size: 15px;
+      font-weight: 700;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+    .transfer-date {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 2px;
+    }
+    .billing-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .customer-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1f2937;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      text-align: left;
+    }
+    thead tr {
+      background-color: #f9fafb;
+      border-top: 1px solid #d1d5db;
+      border-bottom: 1px solid #d1d5db;
+      color: #4b5563;
+      font-weight: 700;
+    }
+    th {
+      padding: 6px 8px;
+    }
+    tbody tr {
+      border-bottom: 1px solid #f3f4f6;
+    }
+    td {
+      padding: 6px 8px;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid #e5e7eb;
+      background-color: #f9fafb;
+      font-size: 9px;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: #4b5563;
+    }
+    .totals-row {
+      border-top: 1px solid #d1d5db;
+      border-bottom: 1px solid #d1d5db;
+      font-weight: 700;
+      background-color: #f9fafb;
+    }
+    .totals-row td {
+      padding: 8px 8px;
+    }
+    @media print {
+      body {
+        padding: 0;
+      }
+      tr {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="printable-area">
+    <div class="header-grid">
+      <div class="left-header">
+        <h3 class="company-title">YDM LOGISTICS</h3>
+        ${creatorName ? `<h4 class="creator-name">${creatorName}</h4>` : ""}
+        <p class="sub-info">${detail.created_by_detail?.address || "N/A"}</p>
+        <p class="sub-info">Phone: ${detail.created_by_detail?.phone_number || "N/A"}</p>
+        <p class="sub-info">Email: ${detail.created_by_detail?.email || "N/A"}</p>
+      </div>
+
+      <div class="right-header">
+        <div>
+          <h2 class="transfer-title">COD Transfer</h2>
+          <p class="payment-num">#${detail.payment_number}</p>
+          <p class="transfer-date">COD Transfer Date: ${formatDateStr(detail.created_at)}</p>
+        </div>
+
+        <div>
+          <span class="billing-label">Billing Customer</span>
+          <h4 class="customer-name">${userName || "N/A"}</h4>
+          <p class="sub-info">${detail.user_detail?.address || "N/A"}</p>
+          <p class="sub-info">Phone: ${detail.user_detail?.phone_number || "N/A"}</p>
+          <p class="sub-info">Email: ${detail.user_detail?.email || "N/A"}</p>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align: center; width: 40px;">SN</th>
+            <th>Order ID</th>
+            <th>Customer Name</th>
+            <th>Payment Type</th>
+            <th style="text-align: right;">COD</th>
+            <th style="text-align: right;">Delivery Charge</th>
+            <th style="text-align: right;">Net</th>
+            <th style="text-align: center;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRows}
+          <tr class="totals-row">
+            <td colSpan="4" style="text-align: right; color: #374151;">Total</td>
+            <td style="text-align: right; color: #111827;">${formatCurrencyVal(totalCOD)}</td>
+            <td style="text-align: right; color: #111827;">${formatCurrencyVal(totalCharge)}</td>
+            <td style="text-align: right; color: ${totalNet < 0 ? "#ef4444" : "#2e4a62"};">${formatCurrencyVal(totalNet)}</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>
+      `;
+
+      const existingIframe = document.getElementById("cod-print-frame");
+      if (existingIframe) {
+        existingIframe.remove();
+      }
+
+      const iframe = document.createElement("iframe");
+      iframe.id = "cod-print-frame";
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "0";
+      iframe.style.visibility = "hidden";
+      document.body.appendChild(iframe);
+
+      const iframeDoc = iframe.contentWindow?.document;
+      if (iframeDoc) {
+        iframeDoc.open();
+        iframeDoc.write(printHtml);
+        iframeDoc.close();
+
+        setTimeout(() => {
+          try {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+          } catch (e) {
+            console.error(e);
+          } finally {
+            setTimeout(() => {
+              if (document.body.contains(iframe)) {
+                document.body.removeChild(iframe);
+              }
+            }, 1000);
+          }
+        }, 250);
+      }
     } catch (err: any) {
       toast.error(
-        "Failed to download CSV: " + (err.message || "Unknown error"),
+        "Failed to print transfer: " + (err?.message || "Unknown error"),
       );
     } finally {
-      setDownloadingId(null);
+      setPrintingId(null);
     }
   };
 
   const columns = buildColumns(
     handlePaymentClick,
-    handleDownloadCSV,
+    handlePrintTransfer,
     handleDeleteClick,
     isYdm,
     isVendor,
     handleStatusChange,
+    printingId,
   );
   const codPayments = data?.results ?? [];
 
