@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/src/lib/auth-context";
 import { cn } from "@/lib/utils";
-import { User, Key, Truck, Percent, Settings } from "lucide-react";
+import { User, Key, Truck, Percent, Settings, Lock } from "lucide-react";
 
 export default function SettingsProfileLayout({
   children,
@@ -19,6 +19,12 @@ export default function SettingsProfileLayout({
       href: "/dashboard/profile",
       label: "Profile",
       icon: User,
+      roles: ["ydm", "vendor", "rider"],
+    },
+    {
+      href: "/dashboard/profile/change-password",
+      label: "Change Password",
+      icon: Lock,
       roles: ["ydm", "vendor", "rider"],
     },
     {
