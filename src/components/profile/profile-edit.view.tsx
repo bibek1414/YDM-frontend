@@ -8,13 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Loader2, Save, User, Lock } from "lucide-react";
+import { Loader2, Save, User, Lock, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ProfileEditView() {
   const { user, isLoading: authLoading, updateUserContext } = useAuth();
   const { mutate: updateProfile, isPending: updatePending } = useUpdateUserProfile();
   const changePassword = useChangeUserPassword();
+
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [form, setForm] = useState({
     first_name: "",
@@ -99,6 +102,8 @@ export default function ProfileEditView() {
             new_password: "",
             confirm_password: "",
           });
+          setShowNewPassword(false);
+          setShowConfirmPassword(false);
         },
       }
     );
@@ -264,26 +269,44 @@ export default function ProfileEditView() {
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="new_profile_password">New Password</Label>
-              <Input
-                id="new_profile_password"
-                type="password"
-                placeholder="••••••••"
-                value={passwordForm.new_password}
-                onChange={(e) => handlePasswordChange("new_password", e.target.value)}
-                className="h-9 focus-visible:ring-0 focus-visible:ring-offset-0 border-gray-200"
-              />
+              <div className="relative">
+                <Input
+                  id="new_profile_password"
+                  type={showNewPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={passwordForm.new_password}
+                  onChange={(e) => handlePasswordChange("new_password", e.target.value)}
+                  className="h-9 pr-10 focus-visible:ring-0 focus-visible:ring-offset-0 border-gray-200"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="confirm_profile_password">Confirm Password</Label>
-              <Input
-                id="confirm_profile_password"
-                type="password"
-                placeholder="••••••••"
-                value={passwordForm.confirm_password}
-                onChange={(e) => handlePasswordChange("confirm_password", e.target.value)}
-                className="h-9 focus-visible:ring-0 focus-visible:ring-offset-0 border-gray-200"
-              />
+              <div className="relative">
+                <Input
+                  id="confirm_profile_password"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={passwordForm.confirm_password}
+                  onChange={(e) => handlePasswordChange("confirm_password", e.target.value)}
+                  className="h-9 pr-10 focus-visible:ring-0 focus-visible:ring-offset-0 border-gray-200"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <div className="pt-2 border-t border-gray-100">

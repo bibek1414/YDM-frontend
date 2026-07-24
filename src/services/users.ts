@@ -103,7 +103,7 @@ export async function changeUserPassword(
   userId: number,
   newPassword: string,
 ): Promise<{ detail?: string; message?: string }> {
-  return api.post<{ detail?: string; message?: string }>(
+  return api.patch<{ detail?: string; message?: string }>(
     `/api/account/users/${userId}/change-password/`,
     { new_password: newPassword }
   );
