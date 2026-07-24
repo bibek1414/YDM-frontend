@@ -505,9 +505,7 @@ function DeliveryBillsContent({
               <td style="padding: 6px 8px; font-weight: 600; color: #2e4a62;">${displayOrderId}</td>
               <td style="padding: 6px 8px; color: #1f2937;">${order.recipient_name || "N/A"}</td>
               <td style="padding: 6px 8px; color: #4b5563;">${order.payment_type || "N/A"}</td>
-              <td style="padding: 6px 8px; text-align: right; color: #374151;">${formatCurrencyVal(displayCOD)}</td>
               <td style="padding: 6px 8px; text-align: right; color: #374151;">${formatCurrencyVal(charge)}</td>
-              <td style="padding: 6px 8px; text-align: right; font-weight: 600; color: ${order.net_amount < 0 ? "#ef4444" : "#2e4a62"};">${formatCurrencyVal(order.net_amount)}</td>
               <td style="padding: 6px 8px; text-align: center;">
                 <span class="status-badge">
                   ${(order.status || "").replace(/_/g, " ")}
@@ -710,9 +708,7 @@ function DeliveryBillsContent({
             <th>Order ID</th>
             <th>Customer Name</th>
             <th>Payment Type</th>
-            <th style="text-align: right;">COD</th>
             <th style="text-align: right;">Delivery Charge</th>
-            <th style="text-align: right;">Net</th>
             <th style="text-align: center;">Status</th>
           </tr>
         </thead>
@@ -720,9 +716,7 @@ function DeliveryBillsContent({
           ${tableRows}
           <tr class="totals-row">
             <td colSpan="4" style="text-align: right; color: #374151;">Total Delivery Charge</td>
-            <td style="text-align: right; color: #111827;">${formatCurrencyVal(totalCOD)}</td>
             <td style="text-align: right; color: #111827;">${formatCurrencyVal(totalCharge)}</td>
-            <td style="text-align: right; color: ${totalNet < 0 ? "#ef4444" : "#2e4a62"};">${formatCurrencyVal(totalNet)}</td>
             <td></td>
           </tr>
         </tbody>

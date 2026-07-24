@@ -341,9 +341,7 @@ export function DeliveryBillDetailsView({
                 <th className="py-2.5 px-3">Order ID</th>
                 <th className="py-2.5 px-3">Customer Name</th>
                 <th className="py-2.5 px-3">Payment Type</th>
-                <th className="py-2.5 px-3 text-right">COD</th>
-                <th className="py-2.5 px-3 text-right"> Delivery Charge</th>
-                <th className="py-2.5 px-3 text-right">Net</th>
+                <th className="py-2.5 px-3 text-right">Delivery Charge</th>
                 <th className="py-2.5 px-3 text-center">Status</th>
               </tr>
             </thead>
@@ -372,10 +370,6 @@ export function DeliveryBillDetailsView({
                     : "";
                 const displayOrderId = `${order.tracking_number}${suffix}`;
 
-                const displayCOD = isCancelledStatus
-                  ? 0
-                  : Number(order.net_amount || 0) + charge;
-
                 return (
                   <tr
                     key={order.tracking_number}
@@ -394,20 +388,7 @@ export function DeliveryBillDetailsView({
                       {order.payment_type}
                     </td>
                     <td className="py-3 px-3 text-right text-gray-700">
-                      {formatCurrency(displayCOD)}
-                    </td>
-                    <td className="py-3 px-3 text-right text-gray-700">
                       {formatCurrency(charge)}
-                    </td>
-                    <td
-                      className={cn(
-                        "py-3 px-3 text-right font-semibold",
-                        order.net_amount < 0
-                          ? "text-red-500"
-                          : "text-[#2e4a62]",
-                      )}
-                    >
-                      {formatCurrency(order.net_amount)}
                     </td>
                     <td className="py-3 px-3 text-center">
                       <span className="inline-flex items-center justify-center px-2 py-0.5 rounded border border-gray-200 bg-gray-50 text-[10px] uppercase font-semibold text-gray-600">
@@ -424,18 +405,7 @@ export function DeliveryBillDetailsView({
                   Total Delivery Charge
                 </td>
                 <td className="py-3 px-3 text-right text-gray-900">
-                  {formatCurrency(totalCOD)}
-                </td>
-                <td className="py-3 px-3 text-right text-gray-900">
                   {formatCurrency(totalCharge)}
-                </td>
-                <td
-                  className={cn(
-                    "py-3 px-3 text-right",
-                    totalNet < 0 ? "text-red-500" : "text-[#2e4a62]",
-                  )}
-                >
-                  {formatCurrency(totalNet)}
                 </td>
                 <td></td>
               </tr>
