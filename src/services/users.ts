@@ -95,3 +95,16 @@ export async function patchUser(id: number, data: UpdateUserPayload): Promise<Us
 export async function updateUser(id: number, data: UpdateUserPayload): Promise<User> {
   return api.patch<User>(`/api/account/users/${id}/`, data);
 }
+
+/**
+ * Change a user's password.
+ */
+export async function changeUserPassword(
+  userId: number,
+  newPassword: string,
+): Promise<{ detail?: string; message?: string }> {
+  return api.post<{ detail?: string; message?: string }>(
+    `/api/account/users/${userId}/change-password/`,
+    { new_password: newPassword }
+  );
+}

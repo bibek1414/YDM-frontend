@@ -6,6 +6,7 @@ import {
   deleteUser,
   patchUser,
   updateUser,
+  changeUserPassword,
   type GetUsersParams,
   type CreateUserPayload,
   type UpdateUserPayload,
@@ -112,6 +113,23 @@ export function useUpdateUser() {
     onError: (error: any) => {
       const first = error?.detail || error?.message;
       toast.error(first || "Failed to update user.");
+    },
+  });
+}
+
+/**
+ * Change a user's password.
+ */
+export function useChangeUserPassword() {
+  return useMutation({
+    mutationFn: ({ userId, newPassword }: { userId: number; newPassword: string }) =>
+      changeUserPassword(userId, newPassword),
+    onSuccess: () => {
+      toast.success("Password changed successfully.");
+    },
+    onError: (error: any) => {
+      const first = error?.detail || error?.message || error?.new_password?.[0];
+      toast.error(first || "Failed to change password.");
     },
   });
 }

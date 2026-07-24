@@ -18,6 +18,7 @@ import { useUsers, useDeleteUser, USERS_QUERY_KEYS } from "@/src/hooks/use-users
 import type { User, UserRole } from "@/src/services/users";
 import { CreateUserDialog } from "@/src/components/users/create-user-dialog";
 import { EditUserDialog } from "@/src/components/users/edit-user-dialog";
+import { ChangePasswordDialog } from "@/src/components/users/change-password-dialog";
 import { useQueryClient } from "@tanstack/react-query";
 
 // ─── Role config ──────────────────────────────────────────────────────────────
@@ -150,6 +151,7 @@ function buildColumns(
           onClick={(e) => e.stopPropagation()}
         >
           <EditUserDialog user={row.original} />
+          <ChangePasswordDialog user={row.original} />
           <Button
             variant="destructive"
             size="icon-xs"
