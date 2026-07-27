@@ -41,6 +41,7 @@ import {
   useDeleteOrder
 } from "./orders.queries";
 import { Order, exportOrders } from "@/src/services/orders";
+import { useVendors } from "@/src/components/vendors/vendors.queries";
 import { type ColumnDef } from "@tanstack/react-table";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -184,6 +185,7 @@ type AppliedFilters = {
   deliveryLocation: string;
   dateRange: DateRange | undefined;
   isAssigned: string;
+  vendorId?: string;
 };
 
 const AssignedChoices = [
@@ -197,31 +199,39 @@ const FilterBar = React.memo(function FilterBar({
   onReset,
   appliedFilters,
   hideStatusFilter = false,
+  showVendorFilter = false,
 }: {
   onFilter: (filters: AppliedFilters) => void;
   onReset: () => void;
   appliedFilters: AppliedFilters;
   hideStatusFilter?: boolean;
+  showVendorFilter?: boolean;
 }) {
   const [searchInput, setSearchInput] = useState("");
   const [draftStatus, setDraftStatus] = useState("");
   const [draftDeliveryLocation, setDraftDeliveryLocation] = useState("");
   const [draftDateRange, setDraftDateRange] = useState<DateRange | undefined>(undefined);
   const [draftIsAssigned, setDraftIsAssigned] = useState("");
+  const [draftVendorId, setDraftVendorId] = useState("");
 
-  const { search: appliedSearch, status: appliedStatus, deliveryLocation: appliedDeliveryLocation, dateRange: appliedDateRange, isAssigned: appliedIsAssigned } = appliedFilters;
-  const isFilterApplied = !!(appliedSearch || (!hideStatusFilter && appliedStatus) || appliedDeliveryLocation || appliedDateRange?.from || appliedIsAssigned);
+  const { search: appliedSearch, status: appliedStatus, deliveryLocation: appliedDeliveryLocation, dateRange: appliedDateRange, isAssigned: appliedIsAssigned, vendorId: appliedVendorId } = appliedFilters;
+  const isFilterApplied = !!(appliedSearch || (!hideStatusFilter && appliedStatus) || appliedDeliveryLocation || appliedDateRange?.from || appliedIsAssigned || appliedVendorId);
 
   const isDraftDifferent =
     searchInput !== appliedSearch ||
     (!hideStatusFilter && draftStatus !== appliedStatus) ||
     draftDeliveryLocation !== appliedDeliveryLocation ||
     draftDateRange !== appliedDateRange ||
-    draftIsAssigned !== appliedIsAssigned;
+    draftIsAssigned !== appliedIsAssigned ||
+    draftVendorId !== appliedVendorId;
 
   const showClearAll = isFilterApplied && !isDraftDifferent;
 
   const isFirstMount = React.useRef(true);
+
+  // Fetch vendors for the vendor filter dropdown
+  const { data: vendorsData } = useVendors({ page_size: 1000 });
+  const vendors = vendorsData?.results ?? [];
 
   // Auto-apply dropdown and date filters immediately on change
   useEffect(() => {
@@ -234,8 +244,9 @@ const FilterBar = React.memo(function FilterBar({
       deliveryLocation: draftDeliveryLocation,
       dateRange: draftDateRange,
       isAssigned: draftIsAssigned,
+      vendorId: draftVendorId,
     });
-  }, [draftStatus, draftDeliveryLocation, draftDateRange, draftIsAssigned, onFilter]);
+  }, [draftStatus, draftDeliveryLocation, draftDateRange, draftIsAssigned, draftVendorId, onFilter]);
 
   // Debounce search input to avoid API spam
   useEffect(() => {
@@ -250,6 +261,7 @@ const FilterBar = React.memo(function FilterBar({
         deliveryLocation: draftDeliveryLocation,
         dateRange: draftDateRange,
         isAssigned: draftIsAssigned,
+        vendorId: draftVendorId,
       });
     }, 400);
 
@@ -262,12 +274,18 @@ const FilterBar = React.memo(function FilterBar({
     setDraftDeliveryLocation("");
     setDraftDateRange(undefined);
     setDraftIsAssigned("");
+    setDraftVendorId("");
     onReset();
   };
 
   return (
     <>
-      <div className={cn("grid grid-cols-1 gap-4", hideStatusFilter ? "md:grid-cols-4" : "md:grid-cols-5")}>
+      <div className={cn(
+        "grid grid-cols-1 gap-4",
+        showVendorFilter
+          ? (hideStatusFilter ? "md:grid-cols-5" : "md:grid-cols-6")
+          : (hideStatusFilter ? "md:grid-cols-4" : "md:grid-cols-5")
+      )}>
         {/* Search */}
         <div className="relative flex flex-col gap-1.5">
           <label className="text-[11px] font-medium text-gray-500 bg-white px-1 -mb-3 z-10 w-fit ml-2 relative">
@@ -402,6 +420,42 @@ const FilterBar = React.memo(function FilterBar({
             </PopoverContent>
           </Popover>
         </div>
+
+        {/* Vendor Dropdown */}
+        {showVendorFilter && (
+          <div className="relative flex flex-col gap-1.5">
+            <label className="text-[11px] font-medium text-gray-500 bg-white px-1 -mb-3 z-10 w-fit ml-2 relative">
+              Select Vendor
+            </label>
+            <Select value={draftVendorId || "all-vendors"} onValueChange={(value) => setDraftVendorId(value === "all-vendors" ? "" : value)}>
+              <SelectTrigger className={cn("w-full !h-10 rounded-xs px-3 text-xs text-gray-500 bg-white shadow-none focus:ring-0 transition-colors", appliedVendorId ? "border-orange-400" : "border-gray-200")}>
+                <SelectValue placeholder="All Vendors">
+                  {draftVendorId
+                    ? (() => {
+                        const v = vendors.find((v) => String(v.id) === draftVendorId);
+                        return v
+                          ? (v.first_name || v.last_name ? `${v.first_name} ${v.last_name}`.trim() : v.username)
+                          : "Loading...";
+                      })()
+                    : "All Vendors"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all-vendors">All Vendors</SelectItem>
+                {vendors.map((vendor) => {
+                  const displayName = vendor.first_name || vendor.last_name
+                    ? `${vendor.first_name} ${vendor.last_name}`.trim()
+                    : vendor.username;
+                  return (
+                    <SelectItem key={vendor.id} value={String(vendor.id)}>
+                      {displayName}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       {showClearAll && (
@@ -689,15 +743,18 @@ export function MyOrdersView({
   userId: propUserId,
   fixedStatus,
   title = "My Orders",
+  isAllVendors = false,
 }: {
   userId?: string;
   /** When set, locks the status filter to this value and hides the status dropdown. */
   fixedStatus?: string;
   /** Heading text for the panel. */
   title?: string;
+  isAllVendors?: boolean;
 } = {}) {
   const { user } = useAuth();
-  const userId = propUserId ?? user?.user_id;
+  const [appliedVendorId, setAppliedVendorId] = useState("");
+  const userId = isAllVendors ? appliedVendorId : (propUserId ?? user?.user_id);
 
   const [pagination, setPagination] = useState({
     pageIndex: 0,
@@ -846,12 +903,13 @@ export function MyOrdersView({
   const [appliedDateRange, setAppliedDateRange] = useState<DateRange | undefined>(undefined);
   const [appliedIsAssigned, setAppliedIsAssigned] = useState("");
 
-  const handleFilter = React.useCallback((filters: { search: string; status: string; deliveryLocation: string; dateRange: DateRange | undefined; isAssigned: string }) => {
+  const handleFilter = React.useCallback((filters: { search: string; status: string; deliveryLocation: string; dateRange: DateRange | undefined; isAssigned: string; vendorId?: string }) => {
     setAppliedSearch(filters.search);
     setAppliedStatus(fixedStatus ?? filters.status);
     setAppliedDeliveryLocation(filters.deliveryLocation);
     setAppliedDateRange(filters.dateRange);
     setAppliedIsAssigned(filters.isAssigned);
+    setAppliedVendorId(filters.vendorId ?? "");
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   }, [fixedStatus]);
 
@@ -861,6 +919,7 @@ export function MyOrdersView({
     setAppliedDeliveryLocation("");
     setAppliedDateRange(undefined);
     setAppliedIsAssigned("");
+    setAppliedVendorId("");
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   }, [fixedStatus]);
 
@@ -868,11 +927,11 @@ export function MyOrdersView({
   const endDate = appliedDateRange?.to ? format(appliedDateRange.to, "yyyy-MM-dd") : "";
 
   const handleExport = async () => {
-    if (!userId) return;
+    if (!isAllVendors && !userId) return;
     try {
       setIsExporting(true);
       await exportOrders(
-        userId,
+        userId || undefined,
         appliedSearch,
         appliedStatus,
         appliedDeliveryLocation,
@@ -890,7 +949,7 @@ export function MyOrdersView({
   };
 
   const { data: orders, isLoading } = useVendorOrders(
-    userId,
+    userId || undefined,
     pagination.pageIndex + 1,
     pagination.pageSize,
     appliedSearch,
@@ -898,7 +957,8 @@ export function MyOrdersView({
     appliedDeliveryLocation,
     startDate,
     endDate,
-    appliedIsAssigned
+    appliedIsAssigned,
+    true
   );
 
   const { data: riders } = useRiders();
@@ -1261,7 +1321,8 @@ export function MyOrdersView({
     deliveryLocation: appliedDeliveryLocation,
     dateRange: appliedDateRange,
     isAssigned: appliedIsAssigned,
-  }), [appliedSearch, appliedStatus, appliedDeliveryLocation, appliedDateRange, appliedIsAssigned]);
+    vendorId: appliedVendorId,
+  }), [appliedSearch, appliedStatus, appliedDeliveryLocation, appliedDateRange, appliedIsAssigned, appliedVendorId]);
 
   const getRowId = React.useCallback((row: Order) => row.tracking_number, []);
 
@@ -1371,6 +1432,7 @@ export function MyOrdersView({
         onReset={handleReset}
         appliedFilters={memoizedAppliedFilters}
         hideStatusFilter={!!fixedStatus}
+        showVendorFilter={isAllVendors}
       />
 
       {/* TABLE */}

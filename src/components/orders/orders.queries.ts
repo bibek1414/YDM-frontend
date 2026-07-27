@@ -18,7 +18,7 @@ import { RIDER_QUERY_KEYS } from "@/src/hooks/use-rider";
 
 export const ORDERS_QUERY_KEYS = {
     all: ["orders"] as const,
-    byVendor: (id: string, page: number, pageSize: number, search: string, status: string, deliveryLocationType: string, startDate: string, endDate: string, isAssigned: string) => [...ORDERS_QUERY_KEYS.all, "vendor", id, page, pageSize, search, status, deliveryLocationType, startDate, endDate, isAssigned] as const,
+    byVendor: (id: string | undefined, page: number, pageSize: number, search: string, status: string, deliveryLocationType: string, startDate: string, endDate: string, isAssigned: string) => [...ORDERS_QUERY_KEYS.all, "vendor", id || "all", page, pageSize, search, status, deliveryLocationType, startDate, endDate, isAssigned] as const,
     byRider: (page: number, pageSize: number, search: string, status: string) => [...ORDERS_QUERY_KEYS.all, "rider", page, pageSize, search, status] as const,
     detail: (userId: string, trackingNumber: string) => [...ORDERS_QUERY_KEYS.all, "detail", userId, trackingNumber] as const,
 };
@@ -32,12 +32,13 @@ export function useVendorOrders(
     deliveryLocationType: string = "",
     startDate: string = "",
     endDate: string = "",
-    isAssigned: string = ""
+    isAssigned: string = "",
+    enabled = true
 ) {
     return useQuery({
-        queryKey: ORDERS_QUERY_KEYS.byVendor(id!, page, pageSize, search, status, deliveryLocationType, startDate, endDate, isAssigned),
-        queryFn: () => getOrdersByVendor(id!, page, pageSize, search, status, deliveryLocationType, startDate, endDate, isAssigned),
-        enabled: !!id,
+        queryKey: ORDERS_QUERY_KEYS.byVendor(id, page, pageSize, search, status, deliveryLocationType, startDate, endDate, isAssigned),
+        queryFn: () => getOrdersByVendor(id, page, pageSize, search, status, deliveryLocationType, startDate, endDate, isAssigned),
+        enabled: enabled,
     });
 }
 

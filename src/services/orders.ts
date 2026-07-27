@@ -83,7 +83,7 @@ export interface Order {
 }
 
 export async function getOrdersByVendor(
-  id: string,
+  id?: string,
   page: number = 1,
   pageSize: number = 50,
   search: string = "",
@@ -93,7 +93,10 @@ export async function getOrdersByVendor(
   endDate: string = "",
   isAssigned: string = "",
 ) {
-  let url = `/api/orders/?user_id=${id}&page=${page}&page_size=${pageSize}`;
+  let url = `/api/orders/?page=${page}&page_size=${pageSize}`;
+  if (id) {
+    url += `&user_id=${id}`;
+  }
   if (search) url += `&search=${encodeURIComponent(search)}`;
   if (status) url += `&status=${encodeURIComponent(status)}`;
   if (deliveryLocationType)
@@ -181,7 +184,7 @@ export async function postOrderComment(
 }
 
 export async function exportOrders(
-  id: string,
+  id?: string,
   search: string = "",
   status: string = "",
   deliveryLocationType: string = "",
@@ -189,16 +192,23 @@ export async function exportOrders(
   endDate: string = "",
   isAssigned: string = "",
 ) {
-  let url = `/api/orders/export/?user_id=${id}`;
-  if (search) url += `&search=${encodeURIComponent(search)}`;
-  if (status) url += `&status=${encodeURIComponent(status)}`;
+  let url = `/api/orders/export/`;
+  const params: string[] = [];
+  if (id) {
+    params.push(`user_id=${id}`);
+  }
+  if (search) params.push(`search=${encodeURIComponent(search)}`);
+  if (status) params.push(`status=${encodeURIComponent(status)}`);
   if (deliveryLocationType)
-    url += `&delivery_location_type=${encodeURIComponent(deliveryLocationType)}`;
-  if (startDate) url += `&start_date=${encodeURIComponent(startDate)}`;
-  if (endDate) url += `&end_date=${encodeURIComponent(endDate)}`;
+    params.push(`delivery_location_type=${encodeURIComponent(deliveryLocationType)}`);
+  if (startDate) params.push(`start_date=${encodeURIComponent(startDate)}`);
+  if (endDate) params.push(`end_date=${encodeURIComponent(endDate)}`);
   if (isAssigned) {
     const isAssignedVal = isAssigned === "assigned" ? "true" : "false";
-    url += `&is_assigned=${encodeURIComponent(isAssignedVal)}`;
+    params.push(`is_assigned=${encodeURIComponent(isAssignedVal)}`);
+  }
+  if (params.length > 0) {
+    url += `?${params.join("&")}`;
   }
 
   return downloadFile(url, "orders-export.xlsx");
