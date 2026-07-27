@@ -3,7 +3,7 @@
 import { useCodPaymentDetail } from "./payments.queries";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Download, Printer } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 import { cn } from "@/lib/utils";
 
 function formatCurrency(value: number | string | undefined | null) {

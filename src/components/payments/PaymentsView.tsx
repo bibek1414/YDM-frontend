@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 import { useAuth } from "@/src/lib/auth-context";
 import { useVendorPaymentOrders } from "./payments.queries";
 import { PaymentOrder } from "@/src/services/payments";

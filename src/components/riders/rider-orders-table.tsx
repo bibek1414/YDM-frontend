@@ -58,7 +58,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useRouter } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 import { DataTable } from "@/components/ui/data-table";
 import { usePostComment } from "@/src/components/orders/order-details/order-details.queries";
 import { OrderDetailsView } from "@/src/components/orders/order-details/order-details.view";

@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import RoleGuard from "@/src/components/guards/role-guard";
-import { useRouter } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 import { type ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/data-table";
 import { useRiders } from "@/src/hooks/use-rider";

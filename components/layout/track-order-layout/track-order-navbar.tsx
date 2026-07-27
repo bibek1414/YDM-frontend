@@ -6,7 +6,7 @@ import { LogOut, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 import Image from "next/image";
 import { useAuth } from "@/src/lib/auth-context";
 import { NotificationDropdown } from "../dashboard-layout/notification-dropdown";
@@ -77,13 +77,13 @@ export function TrackOrderNavbar() {
                 {/* Right actions */}
                 <div className="flex items-center gap-2 shrink-0">
                     {user?.role === "ydm" && (
-                        <Button
-                            variant="ghost"
-                            onClick={() => router.push("/dashboard/users")}
+                        <Link
+                            href="/dashboard/users"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-md font-medium text-gray-700 hover:bg-gray-100 transition-colors"
                         >
                             <Users className="h-3.5 w-3.5" />
                             User Management
-                        </Button>
+                        </Link>
                     )}
                     {user?.role === "ydm" && <NotificationDropdown align="right" />}
                     <Button variant="outline" onClick={() => { logout(); router.replace("/login"); }}>

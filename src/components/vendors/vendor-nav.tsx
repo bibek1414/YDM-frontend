@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
   Package,
@@ -10,7 +9,9 @@ import {
   Plus,
   Coins,
 } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 const BASE = "/dashboard";
 
@@ -20,7 +21,6 @@ export interface VendorNavProps {
 
 export function VendorNav({ vendorId }: VendorNavProps) {
   const pathname = usePathname();
-  const router = useRouter();
 
   const baseHref = vendorId ? `/dashboard/vendors/${vendorId}` : BASE;
   const navItems = [
@@ -53,15 +53,15 @@ export function VendorNav({ vendorId }: VendorNavProps) {
                 !pathname.startsWith(`${item.href}/return-pending`)));
 
           return (
-            <Button
+            <Link
               key={item.label}
-              onClick={() => router.push(item.href)}
-              variant="ghost"
-              className={`rounded-md flex items-center gap-2 px-3.5 py-2 transition-all duration-200 text-sm font-medium ${
+              href={item.href}
+              className={cn(
+                "rounded-md inline-flex items-center gap-2 px-3.5 py-2 transition-all duration-200 text-sm font-medium",
                 isActive
-                  ? "bg-[#2e4a62] text-white hover:bg-[#203445] hover:text-white"
+                  ? "bg-[#2e4a62] text-white hover:bg-[#203445]"
                   : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/70"
-              }`}
+              )}
             >
               <item.icon
                 className={`h-4 w-4 ${
@@ -69,19 +69,19 @@ export function VendorNav({ vendorId }: VendorNavProps) {
                 }`}
               />
               <span>{item.label}</span>
-            </Button>
+            </Link>
           );
         })}
       </div>
       {!vendorId && (
         <div className="shrink-0">
-          <Button
-            onClick={() => router.push(`${BASE}/orders`)}
-            className="bg-[#e2722b] hover:bg-[#d0631c] text-white flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold tracking-wider transition-colors duration-200 border-0"
+          <Link
+            href={`${BASE}/orders`}
+            className="bg-[#e2722b] hover:bg-[#d0631c] text-white inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold tracking-wider transition-colors duration-200"
           >
             <Plus className="w-4 h-4" />
             <span className="uppercase">Create Order</span>
-          </Button>
+          </Link>
         </div>
       )}
     </header>

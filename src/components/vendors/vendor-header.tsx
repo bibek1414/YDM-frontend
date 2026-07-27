@@ -1,8 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useVendor } from "./vendors.queries";
 
 interface VendorHeaderProps {
@@ -10,7 +9,6 @@ interface VendorHeaderProps {
 }
 
 export function VendorHeader({ vendorId }: VendorHeaderProps) {
-  const router = useRouter();
   const { data: vendor, isLoading } = useVendor(vendorId);
 
   const vendorName = vendor
@@ -20,15 +18,13 @@ export function VendorHeader({ vendorId }: VendorHeaderProps) {
   return (
     <div className="grid grid-cols-3 items-center w-full mb-2">
       <div className="flex justify-start">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => router.push("/dashboard/vendors")}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-700 font-normal border border-gray-200 rounded hover:bg-gray-50 transition-colors"
+        <Link
+          href="/dashboard/vendors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-700 font-normal border border-gray-200 rounded hover:bg-gray-50 transition-colors"
         >
           <ChevronLeft className="h-4 w-4" />
           Back to Vendors
-        </Button>
+        </Link>
       </div>
       <div className="flex justify-center text-center">
         {isLoading ? (

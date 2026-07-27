@@ -48,7 +48,7 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
-import { useRouter } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 
 const getFullSignatureUrl = (url: string | null | undefined) => {
   if (!url) return "";

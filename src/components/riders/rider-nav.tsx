@@ -1,8 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { LayoutDashboard, Package, Wallet } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export interface RiderNavProps {
   riderId: string;
@@ -10,7 +11,6 @@ export interface RiderNavProps {
 
 export function RiderNav({ riderId }: RiderNavProps) {
   const pathname = usePathname();
-  const router = useRouter();
 
   const baseHref = `/dashboard/riders/${riderId}`;
   const navItems = [
@@ -29,15 +29,15 @@ export function RiderNav({ riderId }: RiderNavProps) {
               : pathname.startsWith(item.href);
 
           return (
-            <Button
+            <Link
               key={item.label}
-              onClick={() => router.push(item.href)}
-              variant="ghost"
-              className={`rounded-md flex items-center gap-2 px-3.5 py-2 transition-all duration-200 text-sm font-medium ${
+              href={item.href}
+              className={cn(
+                "rounded-md inline-flex items-center gap-2 px-3.5 py-2 transition-all duration-200 text-sm font-medium",
                 isActive
-                  ? "bg-[#2e4a62] text-white hover:bg-[#203445] hover:text-white"
+                  ? "bg-[#2e4a62] text-white hover:bg-[#203445]"
                   : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/70"
-              }`}
+              )}
             >
               <item.icon
                 className={`h-4 w-4 ${
@@ -45,7 +45,7 @@ export function RiderNav({ riderId }: RiderNavProps) {
                 }`}
               />
               <span>{item.label}</span>
-            </Button>
+            </Link>
           );
         })}
       </div>

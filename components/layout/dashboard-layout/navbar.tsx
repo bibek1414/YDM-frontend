@@ -6,7 +6,7 @@ import { LogOut, Users, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 import Image from "next/image";
 import { useAuth } from "@/src/lib/auth-context";
 import { Sheet, SheetTrigger, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -86,13 +86,13 @@ export function Navbar() {
         {/* Right actions (Desktop) */}
         <div className="hidden md:flex items-center gap-2 shrink-0">
           {user?.role === "ydm" && (
-            <Button
-              variant="ghost"
-              onClick={() => router.push("/dashboard/users")}
+            <Link
+              href="/dashboard/users"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-md font-medium text-gray-700 hover:bg-gray-100 transition-colors"
             >
               <Users className="h-3.5 w-3.5" />
               User Management
-            </Button>
+            </Link>
           )}
           {(user?.role === "ydm" || user?.role?.toLowerCase() === "rider") && <NotificationDropdown align="right" />}
           <Button variant="outline" onClick={() => { logout(); router.replace("/login"); }}>
@@ -103,13 +103,12 @@ export function Navbar() {
             <Tooltip>
               <TooltipTrigger
                 render={
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      router.push("/dashboard/profile")
-                    }}>
+                  <Link
+                    href="/dashboard/profile"
+                    className="inline-flex items-center justify-center h-9 w-9 rounded-md bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-colors"
+                  >
                     {(user?.first_name?.charAt(0)?.toUpperCase() ?? "") + (user?.last_name?.charAt(0)?.toUpperCase() ?? "")}
-                  </Button>
+                  </Link>
                 }
               />
               <TooltipContent>
@@ -181,17 +180,14 @@ export function Navbar() {
               {/* Mobile Actions at Bottom */}
               <div className="flex flex-col gap-2 pt-6 border-t border-gray-100 mt-auto">
                 {user?.role === "ydm" && (
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      setMobileOpen(false);
-                      router.push("/dashboard/users");
-                    }}
-                    className="justify-start w-full gap-2 px-3 py-2"
+                  <Link
+                    href="/dashboard/users"
+                    onClick={() => setMobileOpen(false)}
+                    className="inline-flex justify-start w-full gap-2 px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
                   >
                     <Users className="h-4 w-4" />
                     User Management
-                  </Button>
+                  </Link>
                 )}
                 <Button
                   variant="outline"

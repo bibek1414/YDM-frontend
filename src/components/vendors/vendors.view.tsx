@@ -1,18 +1,18 @@
 "use client";
 
 import { BarChart2, ClipboardList, Search } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useState, useCallback } from "react";
 import { useVendors } from "./vendors.queries";
 import { type ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
-import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { CreateUserDialog } from "@/src/components/users/create-user-dialog";
+import { useRouter } from "nextjs-toploader/app";
 
 type Vendor = NonNullable<ReturnType<typeof useVendors>["data"]>["results"][number];
 
-function buildColumns(router: AppRouterInstance): ColumnDef<Vendor>[] {
+function buildColumns(): ColumnDef<Vendor>[] {
   return [
     {
       id: "sn",
@@ -68,22 +68,20 @@ function buildColumns(router: AppRouterInstance): ColumnDef<Vendor>[] {
             className="flex items-center gap-2"
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              type="button"
-              onClick={() => router.push(`/dashboard/vendors/${id}`)}
+            <Link
+              href={`/dashboard/vendors/${id}`}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-700 font-normal border border-gray-200 rounded hover:bg-gray-50 transition-colors"
             >
               <BarChart2 className="h-3.5 w-3.5 text-gray-400" />
               Analytics
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push(`/dashboard/vendors/${id}`)}
+            </Link>
+            <Link
+              href={`/dashboard/vendors/${id}`}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-700 font-normal border border-gray-200 rounded hover:bg-gray-50 transition-colors"
             >
               <ClipboardList className="h-3.5 w-3.5 text-gray-400" />
               Orders
-            </button>
+            </Link>
           </div>
         );
       },
@@ -93,7 +91,7 @@ function buildColumns(router: AppRouterInstance): ColumnDef<Vendor>[] {
 
 export function VendorsView() {
   const router = useRouter();
-  const columns = buildColumns(router);
+  const columns = buildColumns();
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 import { useUnpaidOrders, useCreateCodTransfer } from "./payments.queries";
 import { PaymentOrder } from "@/src/services/payments";
 import { Button, buttonVariants } from "@/components/ui/button";

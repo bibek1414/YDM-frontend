@@ -21,7 +21,8 @@ import {
   useUpdateInvoice,
   usePendingCod,
 } from "../invoices.queries";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 import { useAuth } from "@/src/lib/auth-context";
 
 import { downloadInvoicePDF } from "./utils/pdf-generator";
