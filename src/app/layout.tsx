@@ -6,6 +6,8 @@ import { AuthProvider } from "@/src/lib/auth-context";
 import ReactQueryProvider from "@/src/providers/react-query-provider";
 import { Toaster } from "sonner";
 
+import NextTopLoader from "nextjs-toploader";
+
 const nunitoSansHeading = Nunito_Sans({ subsets: ['latin'], variable: '--font-heading' });
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -36,6 +38,17 @@ export default function RootLayout({
       className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", inter.variable, nunitoSansHeading.variable)}
     >
       <body className="min-h-full flex flex-col">
+        <NextTopLoader
+          color="#ea580c"
+          initialPosition={0.08}
+          crawlSpeed={200}
+          height={3}
+          crawl={true}
+          showSpinner={false}
+          easing="ease"
+          speed={200}
+          shadow="0 0 10px #ea580c,0 0 5px #ea580c"
+        />
         <ReactQueryProvider>
           <AuthProvider>{children}</AuthProvider>
         </ReactQueryProvider>
