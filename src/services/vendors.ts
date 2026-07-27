@@ -3,6 +3,7 @@ import { api } from "@/src/lib/api";
 export interface GetVendorsParams {
   search?: string;
   has_new_order?: boolean;
+  page_size?: number;
 }
 
 export interface PaginatedResponse<T> {
@@ -110,6 +111,9 @@ export async function getVendors(
   }
   if (params?.has_new_order !== undefined) {
     query.append("has_new_order", String(params.has_new_order));
+  }
+  if (params?.page_size !== undefined) {
+    query.append("page_size", String(params.page_size));
   }
   const qs = query.toString();
   return api.get<PaginatedResponse<Vendor>>(
