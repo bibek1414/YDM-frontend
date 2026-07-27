@@ -239,6 +239,9 @@ export interface UpdateOrderPayload {
   remarks?: string;
   status?: string;
   comment?: string;
+  ydm_delivery_charge?: string;
+  ydm_cancelled_charge?: string;
+  assigned_rider?: string;
 }
 
 export async function updateOrderDetails(

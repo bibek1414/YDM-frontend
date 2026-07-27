@@ -624,6 +624,8 @@ function TrackingCodeCell({ value }: { value: string }) {
 
 // ─── Edit Order Modal ─────────────────────────────────────────────────────────
 
+const CANCELLATION_STATUSES = ["CANCELLED", "RETURNING_TO_VENDOR", "RETURNED_TO_VENDOR"];
+
 const editOrderSchema = z.object({
   recipient_name: z.string().min(1, "Recipient name is required"),
   recipient_phone: z.string().min(1, "Phone is required"),
@@ -636,6 +638,8 @@ const editOrderSchema = z.object({
   special_instructions: z.string(),
   remarks: z.string(),
   assigned_rider: z.string().optional(),
+  ydm_delivery_charge: z.string().optional(),
+  ydm_cancelled_charge: z.string().optional(),
 });
 
 type EditOrderFormValues = z.infer<typeof editOrderSchema>;
@@ -657,6 +661,8 @@ function EditOrderModal({
   const { data: riders } = useRiders();
   const updateMutation = useUpdateOrderDetails();
 
+  const isCancelled = order?.status ? CANCELLATION_STATUSES.includes(order.status) : false;
+
   const {
     register,
     control,
@@ -677,6 +683,8 @@ function EditOrderModal({
       special_instructions: "",
       remarks: "",
       assigned_rider: "",
+      ydm_delivery_charge: "",
+      ydm_cancelled_charge: "",
     },
   });
 
@@ -695,6 +703,8 @@ function EditOrderModal({
         special_instructions: order.special_instructions ?? "",
         remarks: order.remarks ?? "",
         assigned_rider: order.assigned_rider?.toString() ?? "",
+        ydm_delivery_charge: order.ydm_delivery_charge ?? "",
+        ydm_cancelled_charge: order.ydm_cancelled_charge ?? "",
       });
     }
   }, [order, reset]);
@@ -859,35 +869,64 @@ function EditOrderModal({
             </div>
 
             {user?.role === "ydm" && (
-              <div className="flex flex-col gap-1">
-                <label className={labelCls}>Assigned Rider</label>
-                <Controller
-                  control={control}
-                  name="assigned_rider"
-                  render={({ field }) => (
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      disabled={order?.status === "ORDER_PLACED"}
-                    >
-                      <SelectTrigger className="border border-gray-200 rounded-xs px-2 py-1.5 h-auto text-xs focus:outline-none focus:ring-0 focus:border-gray-400 bg-white w-full shadow-none">
-                        <SelectValue placeholder="Assign rider" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="unassigned">Unassigned</SelectItem>
-                        {riders?.results.map((rider) => (
-                          <SelectItem
-                            key={rider.id}
-                            value={rider.id.toString()}
-                          >
-                            {`${rider.first_name} ${rider.last_name}`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
+              <>
+                {isCancelled ? (
+                  <div className="flex flex-col gap-1">
+                    <label className={labelCls}>YDM Cancelled Charge</label>
+                    <input {...register("ydm_cancelled_charge")} className={inputCls} />
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    <label className={labelCls}>YDM Delivery Charge</label>
+                    <input {...register("ydm_delivery_charge")} className={inputCls} />
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-1">
+                  <label className={labelCls}>Assigned Rider</label>
+                  <Controller
+                    control={control}
+                    name="assigned_rider"
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={order?.status === "ORDER_PLACED"}
+                      >
+                        <SelectTrigger className="border border-gray-200 rounded-xs px-2 py-1.5 h-auto text-xs focus:outline-none focus:ring-0 focus:border-gray-400 bg-white w-full shadow-none">
+                          <SelectValue placeholder="Assign rider">
+                            {field.value === "unassigned" || !field.value
+                              ? "Unassigned"
+                              : (() => {
+                                  const matchedRider = riders?.results.find(
+                                    (r) => r.id.toString() === field.value,
+                                  );
+                                  if (matchedRider) {
+                                    return `${matchedRider.first_name} ${matchedRider.last_name}`;
+                                  }
+                                  if (order?.assigned_rider?.toString() === field.value && order.assigned_rider_name) {
+                                    return order.assigned_rider_name;
+                                  }
+                                  return field.value;
+                                })()}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="unassigned">Unassigned</SelectItem>
+                          {riders?.results.map((rider) => (
+                            <SelectItem
+                              key={rider.id}
+                              value={rider.id.toString()}
+                            >
+                              {`${rider.first_name} ${rider.last_name}`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+              </>
             )}
           </form>
         )}
