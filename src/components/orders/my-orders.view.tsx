@@ -529,7 +529,7 @@ const FilterBar = React.memo(function FilterBar({
             <Select
               value={draftVendorId || "all-vendors"}
               onValueChange={(value) =>
-                setDraftVendorId(value === "all-vendors" ? "" : value)
+                setDraftVendorId(value === "all-vendors" || !value ? "" : value)
               }
             >
               <SelectTrigger
