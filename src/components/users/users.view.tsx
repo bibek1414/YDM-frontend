@@ -20,6 +20,17 @@ import { CreateUserDialog } from "@/src/components/users/create-user-dialog";
 import { EditUserDialog } from "@/src/components/users/edit-user-dialog";
 import { ChangePasswordDialog } from "@/src/components/users/change-password-dialog";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // ─── Role config ──────────────────────────────────────────────────────────────
 
@@ -145,23 +156,53 @@ function buildColumns(
     {
       id: "actions",
       header: "Actions",
-      cell: ({ row }) => (
-        <div
-          className="flex items-center gap-1.5"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <EditUserDialog user={row.original} />
-          <ChangePasswordDialog user={row.original} />
-          <Button
-            variant="destructive"
-            size="icon-xs"
-            onClick={() => onDelete(row.original)}
-            disabled={isDeleting}
+      cell: ({ row }) => {
+        const user = row.original;
+        const name =
+          user.first_name || user.last_name
+            ? `${user.first_name} ${user.last_name}`.trim()
+            : user.username;
+
+        return (
+          <div
+            className="flex items-center gap-1.5"
+            onClick={(e) => e.stopPropagation()}
           >
-            <Trash2 className="w-3 h-3" />
-          </Button>
-        </div>
-      ),
+            <EditUserDialog user={user} />
+            <ChangePasswordDialog user={user} />
+            <AlertDialog>
+              <AlertDialogTrigger
+                render={
+                  <Button
+                    variant="destructive"
+                    size="icon-xs"
+                    disabled={isDeleting}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                }
+              />
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete User</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete user &ldquo;{name}&rdquo;? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    variant="destructive"
+                    onClick={() => onDelete(user)}
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        );
+      },
     },
   ];
 }
@@ -186,11 +227,6 @@ function UserTable({
   const { data, isLoading, isError } = useUsers(params);
 
   function handleDelete(user: User) {
-    const name =
-      user.first_name || user.last_name
-        ? `${user.first_name} ${user.last_name}`.trim()
-        : user.username;
-    if (!confirm(`Delete user "${name}"? This cannot be undone.`)) return;
     deleteUser.mutate(user.id, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEYS.lists() });
