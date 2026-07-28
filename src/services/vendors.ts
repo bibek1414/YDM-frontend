@@ -154,11 +154,11 @@ export async function getVendorDashboardCompleteStats(
 }
 
 export async function getApiKey(): Promise<CurrentAPIKey> {
-  return api.get<CurrentAPIKey>(`/api/account/api-keys`);
+  return api.get<CurrentAPIKey>(`/api/account/api-keys/`);
 }
 
 export async function regenerateApiKey(): Promise<RegeneratedAPIKey> {
-  return api.post(`/api/account/api-keys`, {});
+  return api.post(`/api/account/api-keys/`, {});
 }
 
 export async function registerWebhook(webhookUrl: string): Promise<WebhookResponse> {
