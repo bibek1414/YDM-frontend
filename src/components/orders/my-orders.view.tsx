@@ -615,7 +615,7 @@ function TrackingCodeCell({ value }: { value: string }) {
           </button>
         </div>
       </div>
-      <span className="text-[#d85860] text-xs font-medium whitespace-nowrap">
+      <span className="text-[#d85860] text-[10px] font-medium whitespace-nowrap">
         {value}
       </span>
     </div>
@@ -1330,7 +1330,7 @@ export function MyOrdersView({
           const currentStatus = row.original.status;
           if (user?.role === "ydm") {
             return (
-              <div className="text-center min-w-[140px]">
+              <div className="text-center min-w-[110px]">
                 <Select
                   value={currentStatus || ""}
                   onValueChange={(val) => {
@@ -1373,7 +1373,7 @@ export function MyOrdersView({
                   <SelectTrigger
                     onClick={(e: any) => e.stopPropagation()}
                     className={cn(
-                      "w-full text-[10px] h-auto py-1.5 px-2 font-semibold border rounded transition-all focus:ring-0 focus:outline-none shadow-none",
+                      "w-full text-[10px] h-7 py-1 px-1.5 font-semibold border rounded transition-all focus:ring-0 focus:outline-none shadow-none",
                       getStatusBadgeClass(currentStatus || ""),
                     )}
                   >
@@ -1421,12 +1421,12 @@ export function MyOrdersView({
         id: "sender_name",
         header: "Vendors Name",
         cell: ({ row }) => (
-          <div className="text-gray-700 text-xs">
-            <div className="font-medium text-gray-900">
+          <div className="text-gray-700 text-[10px]">
+            <div className="font-semibold text-gray-900">
               {row.original.sender_name || "-"}
             </div>
             {row.original.sender_phone && (
-              <div className="text-gray-500 text-[11px]">
+              <div className="text-gray-500 text-[9px]">
                 {row.original.sender_phone}
               </div>
             )}
@@ -1437,14 +1437,14 @@ export function MyOrdersView({
         id: "customerInfo",
         header: "Customer Info",
         cell: ({ row }) => (
-          <div className="text-gray-700 text-xs">
-            <div className="font-medium text-gray-900">
+          <div className="text-gray-700 text-[10px]">
+            <div className="font-semibold text-gray-900">
               {row.original.recipient_name}
             </div>
-            <div className="text-gray-500 text-[11px]">
+            <div className="text-gray-500 text-[9px]">
               {row.original.recipient_phone}
             </div>
-            <div className="font-light mt-0.5 text-gray-500 text-[11px]">
+            <div className="font-light mt-0.5 text-gray-500 text-[9px]">
               {row.original.recipient_address}
             </div>
           </div>
@@ -1468,15 +1468,15 @@ export function MyOrdersView({
             "RETURNED_TO_VENDOR",
           ].includes(row.original.status);
           return (
-            <div className="text-gray-700 text-xs min-w-[140px]">
+            <div className="text-gray-700 text-[10px] min-w-[120px]">
               <div>Collection Amount : {row.original.cod_amount}</div>
               {isCancelledStatus ? (
-                <div className="text-gray-500 text-[11px]">
+                <div className="text-gray-500 text-[9px]">
                   Cancelled Charge:{" "}
                   {row.original.ydm_cancelled_charge ?? "0.00"}
                 </div>
               ) : (
-                <div className="text-gray-500 text-[11px]">
+                <div className="text-gray-500 text-[9px]">
                   Delivery Charge: {row.original.ydm_delivery_charge ?? "0.00"}
                 </div>
               )}
@@ -1488,7 +1488,7 @@ export function MyOrdersView({
         id: "net_amount",
         header: "Net Amount (Rs.)",
         cell: ({ row }) => (
-          <span className="text-gray-700 text-xs font-medium whitespace-nowrap">
+          <span className="text-gray-700 text-[10px] font-medium whitespace-nowrap">
             {row.original.net_amount !== null &&
             row.original.net_amount !== undefined
               ? `Rs. ${row.original.net_amount}`
@@ -1502,7 +1502,7 @@ export function MyOrdersView({
               id: "rider",
               header: "Rider",
               cell: ({ row }: any) => (
-                <div className="text-gray-700 min-w-[140px]">
+                <div className="text-gray-700 min-w-[110px]">
                   <Select
                     value={row.original.assigned_rider?.toString() || ""}
                     disabled={row.original.status === "ORDER_PLACED"}
@@ -1520,7 +1520,10 @@ export function MyOrdersView({
                       );
                     }}
                   >
-                    <SelectTrigger onClick={(e: any) => e.stopPropagation()}>
+                    <SelectTrigger
+                      onClick={(e: any) => e.stopPropagation()}
+                      className="w-full text-[10px] h-7 py-1 px-1.5 font-medium border rounded transition-all focus:ring-0 focus:outline-none shadow-none bg-white border-gray-200"
+                    >
                       <SelectValue placeholder="Assign rider">
                         {row.original.assigned_rider_name || "Assign rider"}
                       </SelectValue>
@@ -1540,10 +1543,10 @@ export function MyOrdersView({
         : []),
       {
         id: "action",
-        header: () => <div className="text-center min-w-[80px]">Action</div>,
+        header: () => <div className="text-center min-w-[100px]">Action</div>,
         cell: ({ row }) => (
           <TooltipProvider delay={100}>
-            <div className="grid grid-cols-4 gap-0.5 items-center justify-center">
+            <div className="flex items-center justify-center gap-0.5 min-w-[100px]">
               <Tooltip>
                 <TooltipTrigger
                   render={
