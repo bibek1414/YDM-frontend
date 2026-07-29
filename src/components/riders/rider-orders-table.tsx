@@ -1143,6 +1143,22 @@ export function RiderOrdersTable({
         },
       },
       {
+        id: "sender_name",
+        header: "Vendors Name",
+        cell: ({ row }) => (
+          <div className="text-gray-700 text-xs">
+            <div className="font-medium text-gray-900">
+              {row.original.sender_name || "-"}
+            </div>
+            {row.original.sender_phone && (
+              <div className="text-gray-500 text-[11px]">
+                {row.original.sender_phone}
+              </div>
+            )}
+          </div>
+        ),
+      },
+      {
         id: "customerInfo",
         header: "Customer Info",
         cell: ({ row }) => (

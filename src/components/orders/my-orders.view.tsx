@@ -624,7 +624,11 @@ function TrackingCodeCell({ value }: { value: string }) {
 
 // ─── Edit Order Modal ─────────────────────────────────────────────────────────
 
-const CANCELLATION_STATUSES = ["CANCELLED", "RETURNING_TO_VENDOR", "RETURNED_TO_VENDOR"];
+const CANCELLATION_STATUSES = [
+  "CANCELLED",
+  "RETURNING_TO_VENDOR",
+  "RETURNED_TO_VENDOR",
+];
 
 const editOrderSchema = z.object({
   recipient_name: z.string().min(1, "Recipient name is required"),
@@ -661,7 +665,9 @@ function EditOrderModal({
   const { data: riders } = useRiders();
   const updateMutation = useUpdateOrderDetails();
 
-  const isCancelled = order?.status ? CANCELLATION_STATUSES.includes(order.status) : false;
+  const isCancelled = order?.status
+    ? CANCELLATION_STATUSES.includes(order.status)
+    : false;
 
   const {
     register,
@@ -873,12 +879,18 @@ function EditOrderModal({
                 {isCancelled ? (
                   <div className="flex flex-col gap-1">
                     <label className={labelCls}>YDM Cancelled Charge</label>
-                    <input {...register("ydm_cancelled_charge")} className={inputCls} />
+                    <input
+                      {...register("ydm_cancelled_charge")}
+                      className={inputCls}
+                    />
                   </div>
                 ) : (
                   <div className="flex flex-col gap-1">
                     <label className={labelCls}>YDM Delivery Charge</label>
-                    <input {...register("ydm_delivery_charge")} className={inputCls} />
+                    <input
+                      {...register("ydm_delivery_charge")}
+                      className={inputCls}
+                    />
                   </div>
                 )}
 
@@ -904,7 +916,11 @@ function EditOrderModal({
                                   if (matchedRider) {
                                     return `${matchedRider.first_name} ${matchedRider.last_name}`;
                                   }
-                                  if (order?.assigned_rider?.toString() === field.value && order.assigned_rider_name) {
+                                  if (
+                                    order?.assigned_rider?.toString() ===
+                                      field.value &&
+                                    order.assigned_rider_name
+                                  ) {
                                     return order.assigned_rider_name;
                                   }
                                   return field.value;
@@ -1400,6 +1416,22 @@ export function MyOrdersView({
             </div>
           );
         },
+      },
+      {
+        id: "sender_name",
+        header: "Vendors Name",
+        cell: ({ row }) => (
+          <div className="text-gray-700 text-xs">
+            <div className="font-medium text-gray-900">
+              {row.original.sender_name || "-"}
+            </div>
+            {row.original.sender_phone && (
+              <div className="text-gray-500 text-[11px]">
+                {row.original.sender_phone}
+              </div>
+            )}
+          </div>
+        ),
       },
       {
         id: "customerInfo",
